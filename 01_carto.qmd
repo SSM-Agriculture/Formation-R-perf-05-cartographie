@@ -1,9 +1,6 @@
----
-title: "Formation carto"
-subtitle: "Réalisation de cartes avec tmap"
----
-
 # Les packages
+
+## Les packages
 
 Les packages utilisés dans ce module sont :
 
@@ -13,7 +10,7 @@ Les packages utilisés dans ce module sont :
 
 Autres possibilités pour la carto avec : {ggplot2} + {ggspatial}, {mapsf}, {leaflet} ou {mapview},...
 
-```{r}
+``` r
 library(tidyverse)
 library(sf)
 library(tmap)
@@ -25,6 +22,8 @@ options(OutDec = ".")
 ```
 
 # Le package tmap
+
+## Le package tmap
 
 -   Depuis 2014
 -   S’inspire de la grammaire des graphiques ({ggplot2})
@@ -38,7 +37,9 @@ Les différentes étapes de la réalisation d'une carte :
 -   Représentation graphique
 -   Habillage du graphique avec titre, légende, sources, etc.
 
-# Cas pratique : réalisation pas à pas d'une première carte
+# Cas pratique : réalisation pas à pas d'une première carte
+
+## Cas pratique : réalisation pas à pas d'une première carte
 
 Objectif : carte départementale métropolitaine des parts d'exploitations ayant au moins une parcelle conduite en agriculture biologique et du nombre d'exploitations (source : RA 2020)
 
@@ -48,7 +49,7 @@ Objectif : carte départementale métropolitaine des parts d'exploitations ayan
 
 La fonction `read_sf()` permet d’ouvrir des fonds carto au format *.TAB* (mapinfo), *.shp* (shapefile), *\*.gpkg* (geopackage) et bien d'autres (PostGIS).
 
-```{r}
+``` r
 gpkg <- "~/CERISE/03-Espace-de-Diffusion/000_Referentiels/0040_Geo/IGN/adminexpress/adminexpress_cog_simpl_000_2023.gpkg"
 
 st_layers(gpkg)
@@ -61,19 +62,19 @@ L'objet combine des polygones (le contour des départements ici) et des données
 
 Ce data.frame se comporte comme n'importe quel autre (même utilisation des fonctions `str()`, `names()`...).
 
-```{r}
+``` r
 head(dep)
 ```
 
 `plot()` permet d'afficher le fond spatial pour toutes les variables dans la fenêtre graphique.
 
-```{r}
+``` r
 plot(dep)
 ```
 
 ### Jointure
 
-```{r}
+``` r
 exp_dep <- read_rds("~/CERISE/03-Espace-de-Diffusion/030_Structures_exploitations/3020_Recensements/RA_2020/01_BASES DIFFUSION RA2020/DEF_240112/RA2020_EXPLOITATIONS_240112.rds") |> 
   as_tibble(.name_repair = make_clean_names) |>
   filter(champ_geo == "1") |> 
@@ -90,14 +91,14 @@ bio <- dep %>%
 
 ## Carte choroplèthe avec tm_polygons
 
-```{r}
+``` r
 tm_shape(bio) +
   tm_polygons("part_exp_bio")
 ```
 
 ## Carte interactive
 
-```{r}
+``` r
 tmap_mode("view")
 
 tm_shape(bio) +
@@ -114,7 +115,7 @@ tm_shape(bio) +
 
 ## Carte à symboles proportionnels
 
-```{r}
+``` r
 tmap_mode("plot")
 
 tm_shape(bio) +
@@ -127,7 +128,7 @@ tm_shape(bio) +
 
 ## Carte choroplèthe + symboles proportionnels
 
-```{r}
+``` r
 tm_shape(bio) +
   tm_polygons(
             "part_exp_bio", 
@@ -148,7 +149,7 @@ tm_shape(bio) +
 
 Une alternative consiste à faire varier la taille + la couleur du cercle : les couleurs des classes de la variable représentée en aplats sont placées dans les ronds proportionnels
 
-```{r}
+``` r
 m <- tm_shape(bio) +
   tm_borders(col = "grey30",
              lwd = 0.25,) +
@@ -164,7 +165,7 @@ m <- tm_shape(bio) +
 m
 ```
 
-```{r}
+``` r
 tmap_mode("view")
 m
 ```
@@ -177,7 +178,7 @@ Lien utile : [Colors in R](www.stat.columbia.edu/~tzheng/files/Rcolor.pdf). Ce 
 
 La fonction `tmaptools::palette_explorer()` permet de visualiser des palettes de couleurs
 
-```{r}
+``` r
 pal_vir <- viridisLite::viridis(5)
 colorspace::specplot(pal_vir)
 
@@ -202,7 +203,7 @@ L'argument style de la fonction tm_polygons() peut recevoir les valeurs suivante
 -   "fisher" ou "jenks" : n classes construites avec une méthode qui minimise les variances intra-classes et maximise les variances inter-classes
 -   ...
 
-```{r}
+``` r
 #| code-fold: true
 #| results: hide
 #| output: false
@@ -256,7 +257,7 @@ exemples_classes <- methodes |>
    map(generer) 
 ```
 
-```{r}
+``` r
 #| echo: false
 #| ouput: false
 #| results: asis
@@ -268,7 +269,6 @@ for (i in seq_along(exemples_classes)) {
   print(exemples_classes[[i]])
   cat("\n\n")
 }
-
 ```
 
 ### Construction des classes → méthode manuelle
@@ -279,7 +279,7 @@ Exemple - La méthode quantile à 5 classes donne les ruptures suivantes : {2.
 
 ## Habillage de la carte
 
-```{r}
+``` r
 tmap_mode("plot")
 
 m <- tm_shape(bio) +
@@ -329,7 +329,7 @@ tmap_save(m, "pcent_bio_fr.png",
 
 # Facettes
 
-```{r}
+``` r
 tmap_mode("plot")
 
 tm_shape(bio) +
@@ -348,7 +348,7 @@ tm_layout("Exploitations\nen conduite bio\npar région")
 
 # Cartogramme
 
-```{r}
+``` r
 library(cartogram)
 
 bio |> 
@@ -364,7 +364,7 @@ bio |>
 
 # Grilles
 
-```{r}
+``` r
 library(geogrid)
 
 bio |> 
@@ -403,7 +403,7 @@ Réaliser la carte de densité de population communale du département de l'Aisn
 
 Le fichier de données est le fichier *popD02_2013.rds* . Le fond de carte est le fichier *ComD02.TAB*.
 
-```{r}
+``` r
 #| code-fold: true
 
 com <- read_sf("donnees_exercices/ComD02.TAB") |> 
@@ -421,7 +421,7 @@ com_pop <- com |>
 
 ## Densité de pop
 
-```{r}
+``` r
 #| code-fold: true
 
 com_pop |> 
@@ -438,7 +438,7 @@ Réaliser la carte d'évolution de la population communale du département de l'
 
 Le fichier de données et le fond de carte sont les mêmes que pour l'exercice précédent.
 
-```{r}
+``` r
 #| code-fold: true
 
 com_pop |> 
@@ -450,7 +450,7 @@ com_pop |>
 
 Reprendre la carte précédente en construisant des classes manuelles.
 
-```{r}
+``` r
 #| code-fold: true
 
 com_pop |> 
@@ -465,7 +465,7 @@ com_pop |>
 
 Reprendre la carte précédente en personnalisant les couleurs.
 
-```{r}
+``` r
 #| code-fold: true
 
 com_pop |> 
@@ -484,7 +484,7 @@ pour inverser la palette : `"-PRGn"`
 
 Habiller la carte construite au fil des exercices précédents.
 
-```{r}
+``` r
 #| code-fold: true
 
 villes <- com_pop |> 
@@ -534,7 +534,7 @@ m
 
 Exporter la carte au format PDF.
 
-```{r}
+``` r
 #| code-fold: true
 
 tmap_save(m, "population_002_2008-2013.pdf", 
