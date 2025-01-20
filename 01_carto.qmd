@@ -1,0 +1,544 @@
+---
+title: "Formation carto"
+subtitle: "Réalisation de cartes avec tmap"
+---
+
+# Les packages
+
+Les packages utilisés dans ce module sont :
+
+-   {sf} : ensemble de fonctions pour gérer les objets spatiaux (importation, traitement, exportation)
+-   {tmap} : réalisation simple de cartes
+-   {RcolorBrewer} : palettes de couleurs
+
+Autres possibilités pour la carto avec : {ggplot2} + {ggspatial}, {mapsf}, {leaflet} ou {mapview},...
+
+```{r}
+library(tidyverse)
+library(sf)
+library(tmap)
+library(janitor)
+library(ragg)
+# library(systemfonts)
+# library(textshaping)
+options(OutDec = ".")
+```
+
+# Le package tmap
+
+-   Depuis 2014
+-   S’inspire de la grammaire des graphiques ({ggplot2})
+-   Cartes statiques ou interactives
+-   Site officiel : <https://r-tmap.github.io/tmap/>
+
+Les différentes étapes de la réalisation d'une carte :
+
+-   Import du fond de carte et des données
+-   Choix de la variable à représenter et construction éventuelle des classes
+-   Représentation graphique
+-   Habillage du graphique avec titre, légende, sources, etc.
+
+# Cas pratique : réalisation pas à pas d'une première carte
+
+Objectif : carte départementale métropolitaine des parts d'exploitations ayant au moins une parcelle conduite en agriculture biologique et du nombre d'exploitations (source : RA 2020)
+
+## Import d'un fond de carte
+
+### Ouverture du fond de carte
+
+La fonction `read_sf()` permet d’ouvrir des fonds carto au format *.TAB* (mapinfo), *.shp* (shapefile), *\*.gpkg* (geopackage) et bien d'autres (PostGIS).
+
+```{r}
+gpkg <- "~/CERISE/03-Espace-de-Diffusion/000_Referentiels/0040_Geo/IGN/adminexpress/adminexpress_cog_simpl_000_2023.gpkg"
+
+st_layers(gpkg)
+dep <- read_sf(gpkg, layer = "departement") |> 
+  filter(insee_reg > "06") |> 
+  st_transform("EPSG:2154")
+```
+
+L'objet combine des polygones (le contour des départements ici) et des données regroupées dans un objet de type data.frame.
+
+Ce data.frame se comporte comme n'importe quel autre (même utilisation des fonctions `str()`, `names()`...).
+
+```{r}
+head(dep)
+```
+
+`plot()` permet d'afficher le fond spatial pour toutes les variables dans la fenêtre graphique.
+
+```{r}
+plot(dep)
+```
+
+### Jointure
+
+```{r}
+exp_dep <- read_rds("~/CERISE/03-Espace-de-Diffusion/030_Structures_exploitations/3020_Recensements/RA_2020/01_BASES DIFFUSION RA2020/DEF_240112/RA2020_EXPLOITATIONS_240112.rds") |> 
+  as_tibble(.name_repair = make_clean_names) |>
+  filter(champ_geo == "1") |> 
+  group_by(siege_dep) |> 
+  summarise(n_exp = n(),
+            n_exp_bio = sum(bio_fil, na.rm = TRUE)) |> 
+  mutate(part_exp_bio = n_exp_bio / n_exp * 100)
+
+head(exp_dep)
+
+bio <- dep %>% 
+  left_join(exp_dep, by = c("insee_dep" = "siege_dep"))
+```
+
+## Carte choroplèthe avec tm_polygons
+
+```{r}
+tm_shape(bio) +
+  tm_polygons("part_exp_bio")
+```
+
+## Carte interactive
+
+```{r}
+tmap_mode("view")
+
+tm_shape(bio) +
+  tm_polygons("part_exp_bio", 
+              style = "pretty",
+              n = 5,
+              title = "part en %", 
+              palette = "BuGn",
+              border.col = "grey30",
+              lwd = 0.25,
+              legend.reverse = TRUE, 
+              legend.format = list(text.separator = " - "))
+```
+
+## Carte à symboles proportionnels
+
+```{r}
+tmap_mode("plot")
+
+tm_shape(bio) +
+  tm_borders(col = "grey30",
+              lwd = 0.25) +
+  tm_symbols(size = "n_exp", 
+             col = "darkolivegreen4",
+             title.size = "Nombre d'exploitations")
+```
+
+## Carte choroplèthe + symboles proportionnels
+
+```{r}
+tm_shape(bio) +
+  tm_polygons(
+            "part_exp_bio", 
+            style = "pretty",
+            n = 5,
+            title = "part en %", 
+            palette = "BuGn",
+            border.col = "grey30",
+            lwd = 0.25,
+            legend.reverse = TRUE, 
+            legend.format = list(text.separator = " - ")) + 
+  tm_symbols(size = "n_exp", 
+           col = "darkolivegreen4",
+           title.size = "nombre d'exploitations")
+```
+
+## Variante
+
+Une alternative consiste à faire varier la taille + la couleur du cercle : les couleurs des classes de la variable représentée en aplats sont placées dans les ronds proportionnels
+
+```{r}
+m <- tm_shape(bio) +
+  tm_borders(col = "grey30",
+             lwd = 0.25,) +
+  tm_symbols(size = "n_exp", 
+             col = "part_exp_bio",
+             palette = "BuGn",
+             title.col = "part (%)",
+             title.size = "nombre\nd'exploitations",
+             legend.format = list(fun = \(x) format(x, big.mark = " "),
+                                  text.separator = " - "),
+             legend.col.reverse = TRUE,
+             legend.size.is.portrait = TRUE) 
+m
+```
+
+```{r}
+tmap_mode("view")
+m
+```
+
+## Couleurs et palettes
+
+Les couleurs sont à préciser dans l'argument palette de la fonction `tm_polygons()`. Il faut autant de couleurs qu'il y a de classes.
+
+Lien utile : [Colors in R](www.stat.columbia.edu/~tzheng/files/Rcolor.pdf). Ce document présente l'ensemble des couleurs disponibles sous R
+
+La fonction `tmaptools::palette_explorer()` permet de visualiser des palettes de couleurs
+
+```{r}
+pal_vir <- viridisLite::viridis(5)
+colorspace::specplot(pal_vir)
+
+pal_div <- tmaptools::get_brewer_pal("PRGn", n = 7)
+colorspace::specplot(pal_div)
+
+
+library(RColorBrewer)
+head(brewer.pal.info)
+str(brewer.pal.info)
+```
+
+## Classes
+
+### Construction des classes → méthode automatique
+
+L'argument style de la fonction tm_polygons() peut recevoir les valeurs suivantes : "cat", "fixed", "sd", "equal", "pretty", "quantile", "kmeans", "hclust", "bclust", "fisher" etc. et l'argument n reçoit le nombre de classes à construire
+
+-   "sd" : n classes construites à partir de la moyenne et dont les amplitudes valent un écart-type (sauf parfois les - classes extrêmes)
+-   "equal" : n classes d'amplitudes égales
+-   "quantile" : n classes de même effectif
+-   "fisher" ou "jenks" : n classes construites avec une méthode qui minimise les variances intra-classes et maximise les variances inter-classes
+-   ...
+
+```{r}
+#| code-fold: true
+#| results: hide
+#| output: false
+
+tmap_mode("plot")
+
+library(classInt)
+library(patchwork)
+
+n_classes <- 5
+methodes <- c("sd", "equal", "pretty", "quantile", "kmeans", "hclust", "bclust", 
+              "fisher", "jenks", "dpih", "headtails")
+
+generer <- function(methode) {
+  cesures <- classIntervals(bio$part_exp_bio, style = methode, n = n_classes)
+  palette <- viridisLite::viridis(length(cesures$brks) - 1)
+  
+  carte <- tm_shape(bio) +
+    tm_polygons("part_exp_bio", 
+                style = "fixed",
+                breaks = cesures$brks,
+                title = "%",
+                palette = palette,
+                border.col = "grey30",
+                lwd = 0.25,
+                legend.reverse = TRUE, 
+                legend.format = list(text.separator = " - ")) +
+    tm_layout(frame = FALSE, 
+              bg.color = NA, 
+              legend.outside = TRUE,
+              legend.outside.position = "bottom")
+
+  graphique <- density(bio$part_exp_bio)[c("x", "y")] |> 
+    as_tibble() |> 
+    mutate(intervalle = findInterval(x, cesures$brks)) |> 
+    filter(between(intervalle, 1, length(cesures$brks) - 1)) |> 
+    mutate(couleur = palette[intervalle]) |> 
+    ggplot(aes(x, y)) +
+    geom_area(aes(fill = couleur)) +
+    geom_line() +
+    scale_fill_identity() +
+    labs(title = methode,
+         x = "part des exploitations en bio (%)", 
+         y = "densité") +
+    theme_minimal()
+  out <- tmap_grob(carte)
+  return(graphique + out)
+}
+
+exemples_classes <- methodes |> 
+   map(generer) 
+```
+
+```{r}
+#| echo: false
+#| ouput: false
+#| results: asis
+
+# exemples_classes |> 
+#   map(print)
+
+for (i in seq_along(exemples_classes)) {
+  print(exemples_classes[[i]])
+  cat("\n\n")
+}
+
+```
+
+### Construction des classes → méthode manuelle
+
+Il est possible de renseigner ses propres classes dans l'argument `breaks` de la fonction `tm_polygons()`. Pour renseigner un découpage en *n* classes, l'argument doit contenir un vecteur de taille *n+1* : `c(min, borne₁, borne₂, … , borneₙ₋₁, max)`.
+
+Exemple - La méthode quantile à 5 classes donne les ruptures suivantes : {2.085026 ; 4.880998 ; 6.820057 ; 9.213732 ; 13.183048 ; 50.000000}. Pour avoir des valeurs arrondies , je peux renseigner `breaks = c(2, 5, 7, 9, 13, 50)` dans la fonction.
+
+## Habillage de la carte
+
+```{r}
+tmap_mode("plot")
+
+m <- tm_shape(bio) +
+  tm_polygons("part_exp_bio", 
+              style = "pretty",
+              n = 5,
+              title = "part en %", 
+              palette = "BuGn",
+              border.col = "grey30",
+              lwd = 0.25,
+              legend.reverse = TRUE, 
+              legend.format = list(text.separator = " - ")) + 
+  tm_text("insee_dep",
+          size = 0.5,
+          remove.overlap = TRUE) +
+  tm_layout("Exploitations\nen conduite bio", 
+            scale = .8,
+            legend.position = c("left", "center"),
+            fontfamily = "Marianne") +
+  tm_credits(paste0("données Agreste RA 2020\nfond carto. d'après IGN AdminExpress 2023\n", 
+                    Sys.Date()),
+             size = 0.5,
+             position = c(0.2, 0.01)) +
+  tm_scale_bar(color.dark = "grey40",
+               width = 0.2,
+               position = c(0.45, 0.01)) +
+  tm_compass(type = "rose",
+             position = c(0.7, 0.01),
+             size = 1.5) +
+  tm_logo("logo_masa.png", 
+          position = c("left", "bottom"), 
+          height = 3)
+
+m
+
+tmap_save(m, "pcent_bio_fr.png", 
+          width = 20, units = "cm", asp = 1.618,
+          dpi = 300,
+          device = agg_png)
+
+
+# ou pour une carte interactive :
+# 
+# tmap_mode("view")
+# tmap_save(m, "pcent_bio_fr.html")
+```
+
+# Facettes
+
+```{r}
+tmap_mode("plot")
+
+tm_shape(bio) +
+tm_polygons("part_exp_bio", 
+            style = "pretty",
+            n = 5,
+            title = "part en %", 
+            palette = "BuGn",
+            border.col = "grey30",
+            lwd = 0.25,
+            legend.reverse = TRUE, 
+            legend.format = list(text.separator = " - ")) +
+tm_facets("insee_reg") +
+tm_layout("Exploitations\nen conduite bio\npar région")
+```
+
+# Cartogramme
+
+```{r}
+library(cartogram)
+
+bio |> 
+  cartogram_dorling("n_exp") |> 
+  tm_shape() + 
+  tm_polygons("n_exp", 
+              legend.reverse = TRUE, 
+              style = "quantile",
+              n = 5) +
+  tm_text("insee_dep", size = 0.8) +
+  tm_layout(legend.outside = TRUE)
+```
+
+# Grilles
+
+```{r}
+library(geogrid)
+
+bio |> 
+  calculate_grid(grid_type = "hexagonal", seed = 3) |> 
+  assign_polygons(bio, new_polygons = _) |>  
+  tm_shape() + 
+  tm_polygons("part_exp_bio",
+              legend.reverse = TRUE) +
+  tm_text("insee_dep", size = 0.8) +
+  tm_layout(legend.outside = TRUE)
+```
+
+# Bibliographie
+
+## Liens utiles
+
+-   La [vignette du package tmap](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
+-   Le [livre](https://r-tmap.github.io/tmap-book/)
+-   Les [couleurs de R](https://r-charts.com/colors/)
+
+## Aller plus loin
+
+-   GUR : [Cartographie avec R](https://ged.national.agri/gedsi/nxdoc/default/88702758-b87d-4eac-bc4d-218fcfdbf238/view_documents)
+-   La formation MTES [Analyses spatiales avec R](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/)
+
+## Références
+
+::: {#refs}
+:::
+
+# Exercices
+
+## Données
+
+Réaliser la carte de densité de population communale du département de l'Aisne.
+
+Le fichier de données est le fichier *popD02_2013.rds* . Le fond de carte est le fichier *ComD02.TAB*.
+
+```{r}
+#| code-fold: true
+
+com <- read_sf("donnees_exercices/ComD02.TAB") |> 
+  clean_names()
+
+pop <- read_rds("donnees_exercices/popD02_2013.rds") |> 
+  as_tibble(.name_repair = make_clean_names)
+
+com_pop <- com |> 
+  select(-libgeo, -surf) |> 
+  left_join(pop, join_by(codgeo)) |> 
+  mutate(dpop_habkm2 = pop13 / surf,
+         evol_pop_pcent = (pop13 - pop08) / pop08 * 100)
+```
+
+## Densité de pop
+
+```{r}
+#| code-fold: true
+
+com_pop |> 
+  tm_shape() +
+  tm_polygons("dpop_habkm2",
+              style = "kmeans",
+              legend.reverse = TRUE, 
+              palette = "viridis")
+```
+
+## Évolution pop
+
+Réaliser la carte d'évolution de la population communale du département de l'Aisne. On différenciera les évolutions positives et les évolutions négatives.
+
+Le fichier de données et le fond de carte sont les mêmes que pour l'exercice précédent.
+
+```{r}
+#| code-fold: true
+
+com_pop |> 
+  tm_shape() +
+  tm_polygons("evol_pop_pcent")
+```
+
+## Classes
+
+Reprendre la carte précédente en construisant des classes manuelles.
+
+```{r}
+#| code-fold: true
+
+com_pop |> 
+  tm_shape() +
+  tm_polygons("evol_pop_pcent",
+              breaks = c(-20, -10, -5, 5, 10, 20),
+              midpoint = 0,
+              legend.reverse = TRUE)
+```
+
+## Couleurs
+
+Reprendre la carte précédente en personnalisant les couleurs.
+
+```{r}
+#| code-fold: true
+
+com_pop |> 
+  tm_shape() +
+  tm_polygons("evol_pop_pcent",
+              style = "fixed",
+              breaks = c(-20, -10, -5, 5, 10, 20),
+              legend.reverse = TRUE, 
+              midpoint = 0,
+              palette = "PRGn")
+```
+
+pour inverser la palette : `"-PRGn"`
+
+## Finalisation
+
+Habiller la carte construite au fil des exercices précédents.
+
+```{r}
+#| code-fold: true
+
+villes <- com_pop |> 
+  filter(pop13 > 10000)
+
+m <- com_pop |> 
+  tm_shape() +
+  tm_polygons("evol_pop_pcent",
+              title = "variation\nhabitants (%)",
+              style = "fixed",
+              breaks = c(-Inf, -20, -10, -5, 5, 10, 20, Inf),
+              legend.reverse = TRUE, 
+              midpoint = 0,
+              legend.format = list(text.separator = "à",
+                                   text.less.than = "moins de",
+                                   text.or.more = "ou plus"),
+              palette = "PRGn") +
+  tm_shape(villes) +
+  tm_symbols(size = 0.1, 
+             col = "black") +
+  tm_text("libgeo", 
+          size = 0.5,
+          just = -0.1, 
+          shadow = TRUE, ) +
+  tm_layout(main.title = "Évolution de la population - Aisne 2008-2013",
+            main.title.size = 0.9,
+            scale = .8,
+            legend.position = c(0.7, 0.15),
+            fontfamily = "Marianne") +
+  tm_credits(paste0("données INSEE RP 2020\nfond carto. d'après IGN\n", 
+                    Sys.Date()),
+             size = 0.5,
+             position = c(0.6, 0.05)) +
+  tm_scale_bar(color.dark = "grey40",
+               width = 0.2,
+               position = c(0.6, 0.01)) +
+  tm_compass(type = "rose",
+             position = c(0.9, 0.01),
+             size = 1.5) +
+  tm_logo("logo_masa.png", margin = 0,
+          position = c("left", "bottom"), 
+          height = 3)
+m
+```
+
+## Exporter en PDF
+
+Exporter la carte au format PDF.
+
+```{r}
+#| code-fold: true
+
+tmap_save(m, "population_002_2008-2013.pdf", 
+          width = 20, height = 28.7, units = "cm",
+          dpi = 300,
+          device = cairo_pdf)
+```
