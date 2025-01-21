@@ -58,7 +58,11 @@ dep <- read_sf(gpkg, layer = "departement") |>
   st_transform("EPSG:2154")
 ```
 
+![](images/clipboard-3749509872.png){fig-align="center"}
+
 L'objet combine des polygones (le contour des départements ici) et des données regroupées dans un objet de type data.frame.
+
+------------------------------------------------------------------------
 
 Ce data.frame se comporte comme n'importe quel autre (même utilisation des fonctions `str()`, `names()`...).
 
@@ -66,11 +70,17 @@ Ce data.frame se comporte comme n'importe quel autre (même utilisation des fonc
 head(dep)
 ```
 
+![](images/clipboard-506331518.png){fig-align="center"}
+
 `plot()` permet d'afficher le fond spatial pour toutes les variables dans la fenêtre graphique.
 
 ``` r
 plot(dep)
 ```
+
+![](images/clipboard-205340217.png){fig-align="center"}
+
+------------------------------------------------------------------------
 
 ### Jointure
 
@@ -89,12 +99,20 @@ bio <- dep %>%
   left_join(exp_dep, by = c("insee_dep" = "siege_dep"))
 ```
 
+![](images/clipboard-3875996549.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
 ## Carte choroplèthe avec tm_polygons
 
 ``` r
 tm_shape(bio) +
   tm_polygons("part_exp_bio")
 ```
+
+![](images/clipboard-1763913478.png){fig-align="center"}
+
+------------------------------------------------------------------------
 
 ## Carte interactive
 
@@ -113,6 +131,8 @@ tm_shape(bio) +
               legend.format = list(text.separator = " - "))
 ```
 
+![](images/clipboard-1074117001.png){fig-align="center"}
+
 ## Carte à symboles proportionnels
 
 ``` r
@@ -125,6 +145,8 @@ tm_shape(bio) +
              col = "darkolivegreen4",
              title.size = "Nombre d'exploitations")
 ```
+
+![](images/clipboard-223446850.png){fig-align="center"}
 
 ## Carte choroplèthe + symboles proportionnels
 
@@ -145,6 +167,8 @@ tm_shape(bio) +
            title.size = "nombre d'exploitations")
 ```
 
+![](images/clipboard-1095066075.png){fig-align="center"}
+
 ## Variante
 
 Une alternative consiste à faire varier la taille + la couleur du cercle : les couleurs des classes de la variable représentée en aplats sont placées dans les ronds proportionnels
@@ -162,13 +186,15 @@ m <- tm_shape(bio) +
                                   text.separator = " - "),
              legend.col.reverse = TRUE,
              legend.size.is.portrait = TRUE) 
-m
 ```
+
+![](images/clipboard-1182804328.png){fig-align="center"}
 
 ``` r
 tmap_mode("view")
-m
 ```
+
+![](images/clipboard-1991139768.png){fig-align="center"}
 
 ## Couleurs et palettes
 
@@ -181,19 +207,42 @@ La fonction `tmaptools::palette_explorer()` permet de visualiser des palettes de
 ``` r
 pal_vir <- viridisLite::viridis(5)
 colorspace::specplot(pal_vir)
-
-pal_div <- tmaptools::get_brewer_pal("PRGn", n = 7)
-colorspace::specplot(pal_div)
-
-
-library(RColorBrewer)
-head(brewer.pal.info)
-str(brewer.pal.info)
 ```
 
-## Classes
+![](images/clipboard-1060732439.png){fig-align="center"}
 
-### Construction des classes → méthode automatique
+------------------------------------------------------------------------
+
+``` r
+pal_div <- tmaptools::get_brewer_pal("PRGn", n = 7)
+```
+
+![](images/clipboard-2521962833.png){fig-align="center"}
+
+``` r
+colorspace::specplot(pal_div)
+```
+
+![](images/clipboard-3779356658.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
+``` r
+library(RColorBrewer)
+head(brewer.pal.info)
+```
+
+![](images/clipboard-3178298197.png)
+
+------------------------------------------------------------------------
+
+`{.' .r} str(brewer.pal.info)`
+
+![](images/clipboard-3609586085.png){fig-align="center"}
+
+# Classes
+
+## Construction des classes → méthode automatique
 
 L'argument style de la fonction tm_polygons() peut recevoir les valeurs suivantes : "cat", "fixed", "sd", "equal", "pretty", "quantile", "kmeans", "hclust", "bclust", "fisher" etc. et l'argument n reçoit le nombre de classes à construire
 
@@ -202,6 +251,8 @@ L'argument style de la fonction tm_polygons() peut recevoir les valeurs suivante
 -   "quantile" : n classes de même effectif
 -   "fisher" ou "jenks" : n classes construites avec une méthode qui minimise les variances intra-classes et maximise les variances inter-classes
 -   ...
+
+------------------------------------------------------------------------
 
 ``` r
 #| code-fold: true
@@ -257,6 +308,40 @@ exemples_classes <- methodes |>
    map(generer) 
 ```
 
+![](images/clipboard-511509773.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
+![](images/clipboard-282850556.png){fig-align="center"}
+
+![](images/clipboard-129827667.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
+![](images/clipboard-2893698102.png){fig-align="center"}
+
+![](images/clipboard-1200282682.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
+![](images/clipboard-1087668820.png){fig-align="center"}
+
+![](images/clipboard-4030245030.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
+![](images/clipboard-3737099555.png){fig-align="center"}
+
+![](images/clipboard-114083837.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
+![](images/clipboard-1771683977.png){fig-align="center"}
+
+![](images/clipboard-4231803302.png){fig-align="center"}
+
+------------------------------------------------------------------------
+
 ``` r
 #| echo: false
 #| ouput: false
@@ -271,7 +356,9 @@ for (i in seq_along(exemples_classes)) {
 }
 ```
 
-### Construction des classes → méthode manuelle
+------------------------------------------------------------------------
+
+## Construction des classes → méthode manuelle
 
 Il est possible de renseigner ses propres classes dans l'argument `breaks` de la fonction `tm_polygons()`. Pour renseigner un découpage en *n* classes, l'argument doit contenir un vecteur de taille *n+1* : `c(min, borne₁, borne₂, … , borneₙ₋₁, max)`.
 
@@ -327,8 +414,14 @@ tmap_save(m, "pcent_bio_fr.png",
 # tmap_save(m, "pcent_bio_fr.html")
 ```
 
+![](images/clipboard-79388324.png){fig-align="center"}
+
 # Facettes
 
+## Exemple Facettes
+
+::::: columns
+::: {.column width="45%"}
 ``` r
 tmap_mode("plot")
 
@@ -345,9 +438,19 @@ tm_polygons("part_exp_bio",
 tm_facets("insee_reg") +
 tm_layout("Exploitations\nen conduite bio\npar région")
 ```
+:::
+
+::: {.column width="55%"}
+![](images/clipboard-1076412612.png){fig-align="center"}
+:::
+:::::
 
 # Cartogramme
 
+## Exemple Cartogramme
+
+::::: columns
+::: {.column width="45%"}
 ``` r
 library(cartogram)
 
@@ -361,9 +464,19 @@ bio |>
   tm_text("insee_dep", size = 0.8) +
   tm_layout(legend.outside = TRUE)
 ```
+:::
+
+::: {.column width="55%"}
+![](images/clipboard-3897928796.png){fig-align="center"}
+:::
+:::::
 
 # Grilles
 
+## Exemple Grilles
+
+::::: columns
+::: {.column width="45%"}
 ``` r
 library(geogrid)
 
@@ -376,6 +489,12 @@ bio |>
   tm_text("insee_dep", size = 0.8) +
   tm_layout(legend.outside = TRUE)
 ```
+:::
+
+::: {.column width="55%"}
+![](images/clipboard-3128090706.png){fig-align="center"}
+:::
+:::::
 
 # Bibliographie
 
@@ -392,8 +511,29 @@ bio |>
 
 ## Références
 
-::: {#refs}
-:::
+-   Crameri, Fabio, Grace E. Shephard, et Philip J. Heron. 2020. « The Misuse of Colour in Science Communication ». *Nature Communications 11* (1): 5444. <https://doi.org/10.1038/s41467-020-19160-7>.
+
+-   Engelaere-Lefebvre, Juliette, Maël Theulière, et Jean-Daniel Lomenède. 2023. « Analyses spatiales avec R ». *Formations R aux MTES & MCTRCT*. [https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/.)
+
+-   Harrower, Mark, et Cynthia A. Brewer. 2003. « ColorBrewer. Org: An Online Tool for Selecting Colour Schemes for Maps ». *The Cartographic Journal 40* (1): 27‑37. <https://doi.org/10.1179/000870403235002042>.
+
+-   Loonis, Vincent, et Marie-Pierre de Bellefon. 2018. Manuel d’analyse spatiale. Théorie et mise en œuvre pratique avec R. Insee Méthodes 131. Montrouge: INSEE - Eurostat. <https://www.insee.fr/fr/information/3635442>.
+
+-   Lovelace, Robin, Jakub Nowosad, et Jannes Muenchow. 2023. Geocomputation with R. <https://r.geocompx.org/>.
+
+-   Pebesma, Edzer, et Roger Bivand. 2023. Spatial Data Science: With Applications in R. New York: Chapman and Hall/CRC. <https://doi.org/10.1201/9780429459016>.
+
+-   Rowe, Francisco, et Dani Arribas-Bel. 2022. Spatial Modelling for Data Scientists. University of Liverpool. <https://gdsl-ul.github.io/san/>.
+
+------------------------------------------------------------------------
+
+-   Theulière, Maël. 2019. « Les données spatiales avec R ». <https://maeltheuliere.github.io/rspatial/index.html>.
+
+-   Wimberly, Michael C. 2023. Geographic Data Science with R: Visualizing and Analyzing Environmental Change. <https://bookdown.org/mcwimberly/gdswr-book/>.
+
+-   Zeileis, Achim, Kurt Hornik, et Paul Murrell. 2009. « Escaping RGBland: Selecting Colors for Statistical Graphics ». Research {{Report Series}} 61. Vienna: Department of Statistics and Mathematics, WU Vienna University of Economics and Business. <http://www.sciencedirect.com/science/article/pii/S0167947308005549>.
+
+-   Zeileis, Achim, et Paul Murrell. 2023. « Coloring in R’s Blind Spot ». The R Journal 15 (3): 240‑56. <https://doi.org/10.32614/RJ-2023-071>.
 
 # Exercices
 
@@ -432,6 +572,8 @@ com_pop |>
               palette = "viridis")
 ```
 
+![](images/clipboard-3253355769.png){fig-align="center"}
+
 ## Évolution pop
 
 Réaliser la carte d'évolution de la population communale du département de l'Aisne. On différenciera les évolutions positives et les évolutions négatives.
@@ -445,6 +587,8 @@ com_pop |>
   tm_shape() +
   tm_polygons("evol_pop_pcent")
 ```
+
+![](images/clipboard-4210766889.png){fig-align="center"}
 
 ## Classes
 
@@ -460,6 +604,8 @@ com_pop |>
               midpoint = 0,
               legend.reverse = TRUE)
 ```
+
+![](images/clipboard-78065535.png){fig-align="center"}
 
 ## Couleurs
 
@@ -477,6 +623,8 @@ com_pop |>
               midpoint = 0,
               palette = "PRGn")
 ```
+
+![](images/clipboard-399650471.png){fig-align="center"}
 
 pour inverser la palette : `"-PRGn"`
 
@@ -529,6 +677,8 @@ m <- com_pop |>
           height = 3)
 m
 ```
+
+![](images/clipboard-2082243720.png){fig-align="center"}
 
 ## Exporter en PDF
 
