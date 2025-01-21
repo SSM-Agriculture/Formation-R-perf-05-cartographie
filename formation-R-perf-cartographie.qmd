@@ -1,11 +1,11 @@
 ---
-title: "Formation-R-perfectiomment"
+title: "Formation-R-perfectionnement"
 subtitle: "Module Cartographie"
 date: today
 date-format: "DD/MM/YYYY"
 author: "SSP/DEMESIS"
 description: |
-  Support de formation R-perfectiomment : Module Cartographie
+  Support de formation R-perfectionnement : Module Cartographie
 slide-tone: false # for blind readers
 chalkboard: false # press the B key to toggle chalkboard
 transition: slide
