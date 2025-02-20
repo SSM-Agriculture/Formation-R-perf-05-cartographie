@@ -64,4 +64,4 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add diaporama_pdf/Diaporama_modules_cartographie.pdf
           git commit -m "MAJ de la version pdf"
-          git push origin main
+          git push origin master
