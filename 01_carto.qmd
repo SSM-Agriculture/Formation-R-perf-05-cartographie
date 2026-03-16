@@ -1,58 +1,54 @@
 # Les packages
 
-## Les packages
+## Les packages utilisés dans ce module
 
-Les packages utilisés dans ce module sont :
+- `{sf}` (4.4) : ensemble de fonctions pour gérer les objets spatiaux (import, traitement, export...) ([documentation](https://r-spatial.github.io/sf/))
+- `{tmap}` (4.2) : réalisation simple de cartes ([documentation](https://r-tmap.github.io/tmap/))
+- `{RcolorBrewer}` : palettes de couleurs décrites sur <https://colorbrewer2.org/>
 
--   {sf} : ensemble de fonctions pour gérer les objets spatiaux (importation, traitement, exportation)
--   {tmap} : réalisation simple de cartes
--   {RcolorBrewer} : palettes de couleurs
-
-Autres possibilités pour la carto avec : {ggplot2} + {ggspatial}, {mapsf}, {leaflet} ou {mapview},...
-
-``` r
+```r
 library(tidyverse)
 library(sf)
 library(tmap)
 library(janitor)
-library(ragg)
-# library(systemfonts)
-# library(textshaping)
+library(ragg)         # remplace grDevices (défaut) <https://ragg.r-lib.org/>
 options(OutDec = ".")
 ```
 
-# Le package tmap
+Autres possibilités pour la cartographie avec `{ggplot2} + {ggspatial}`, `{mapsf}`, `{leaflet}`, `{mapview}`...
 
-## Le package tmap
+## Le package `{tmap}`
 
--   Depuis 2014
--   S’inspire de la grammaire des graphiques ({ggplot2})
--   Cartes statiques ou interactives
--   Site officiel : <https://r-tmap.github.io/tmap/>
+- Depuis 2014.
+- S’inspire de la grammaire des graphiques (`{ggplot2}`).
+- Cartes statiques ou interactives.
+- Site officiel : <https://r-tmap.github.io/tmap/>.
+- Livre : <https://r.geocompx.org/>.
 
-Les différentes étapes de la réalisation d'une carte :
+## Les étapes de la réalisation d'une carte
 
--   Import du fond de carte et des données
--   Choix de la variable à représenter et construction éventuelle des classes
--   Représentation graphique
--   Habillage du graphique avec titre, légende, sources, etc.
+1. Import du fond de carte et des données
+2. Choix de la variable à représenter et construction éventuelle des classes
+3. Représentation graphique
+4. Habillage du graphique avec titre, légende, sources, etc.
 
 # Cas pratique : réalisation pas à pas d'une première carte
 
-## Cas pratique : réalisation pas à pas d'une première carte
+## Objectif
 
-Objectif : carte départementale métropolitaine des parts d'exploitations ayant au moins une parcelle conduite en agriculture biologique et du nombre d'exploitations (source : RA 2020)
+_Réaliser une carte départementale métropolitaine des parts d'exploitations ayant au moins une parcelle conduite en agriculture biologique et du nombre d'exploitations (source : RA 2020)_.
 
 ## Import d'un fond de carte
 
 ### Ouverture du fond de carte
 
-La fonction `read_sf()` permet d’ouvrir des fonds carto au format *.TAB* (mapinfo), *.shp* (shapefile), *\*.gpkg* (geopackage) et bien d'autres (PostGIS).
+La fonction `read_sf()` permet d’ouvrir des fonds cartographiques au format *.TAB* (MapInfo), *.shp* (Shapefile), *.gpkg* ([GeoPackage](https://www.geopackage.org/)) et bien d'autres (bases de données [PostGIS](https://postgis.net/)).
 
-``` r
+```r
 gpkg <- "~/CERISE/03-Espace-de-Diffusion/000_Referentiels/0040_Geo/IGN/adminexpress/adminexpress_cog_simpl_000_2023.gpkg"
 
 st_layers(gpkg)
+# https://r-spatial.github.io/sf/reference/st_read.html
 dep <- read_sf(gpkg, layer = "departement") |> 
   filter(insee_reg > "06") |> 
   st_transform("EPSG:2154")
@@ -60,21 +56,21 @@ dep <- read_sf(gpkg, layer = "departement") |>
 
 ![](images/clipboard-3749509872.png){fig-align="center"}
 
-L'objet combine des polygones (le contour des départements ici) et des données regroupées dans un objet de type data.frame.
+L'objet `dep` combine des polygones (le contour des départements, attribut `geom`) et des données dans un objet de type `data.frame` ou `tibble`.
 
 ------------------------------------------------------------------------
 
-Ce data.frame se comporte comme n'importe quel autre (même utilisation des fonctions `str()`, `names()`...).
+Ce `data.frame` se comporte comme n'importe quel autre (même utilisation des fonctions `str()`, `names()`, les fonctions de `{dplyr}`...).
 
-``` r
+```r
 head(dep)
 ```
 
 ![](images/clipboard-506331518.png){fig-align="center"}
 
-`plot()` permet d'afficher le fond spatial pour toutes les variables dans la fenêtre graphique.
+`plot()` permet d'afficher le fond spatial pour toutes les variables dans la fenêtre graphique ([documentation](https://r-spatial.github.io/sf/reference/plot.html)).
 
-``` r
+```r
 plot(dep)
 ```
 
@@ -82,9 +78,9 @@ plot(dep)
 
 ------------------------------------------------------------------------
 
-### Jointure
+### Jointure avec le RA 2020
 
-``` r
+```r
 exp_dep <- read_rds("~/CERISE/03-Espace-de-Diffusion/030_Structures_exploitations/3020_Recensements/RA_2020/01_BASES DIFFUSION RA2020/DEF_240112/RA2020_EXPLOITATIONS_240112.rds") |> 
   as_tibble(.name_repair = make_clean_names) |>
   filter(champ_geo == "1") |> 
@@ -95,7 +91,7 @@ exp_dep <- read_rds("~/CERISE/03-Espace-de-Diffusion/030_Structures_exploitation
 
 head(exp_dep)
 
-bio <- dep %>% 
+bio <- dep |> 
   left_join(exp_dep, by = c("insee_dep" = "siege_dep"))
 ```
 
@@ -103,39 +99,57 @@ bio <- dep %>%
 
 ------------------------------------------------------------------------
 
-## Carte choroplèthe avec tm_polygons
+Affichage par défaut avec `plot(bio |> select(geom, part_exp_bio))`.
 
-``` r
+![](images/2-2-cas_part_expl_bio-plot.png){fig-align="center"}
+
+## Carte choroplèthe avec `tm_polygons`
+
+```r
 tm_shape(bio) +
   tm_polygons("part_exp_bio")
 ```
 
-![](images/clipboard-1763913478.png){fig-align="center"}
+![](images/2-3-cas_part_expl_bio-tm_polygons.png){fig-align="center"}
 
 ------------------------------------------------------------------------
 
 ## Carte interactive
 
-``` r
+```r
+# mode "view" interactif <https://r-tmap.github.io/tmap/reference/tmap_mode.html>
 tmap_mode("view")
-
 tm_shape(bio) +
-  tm_polygons("part_exp_bio", 
-              style = "pretty",
-              n = 5,
-              title = "part en %", 
-              palette = "BuGn",
-              border.col = "grey30",
-              lwd = 0.25,
-              legend.reverse = TRUE, 
-              legend.format = list(text.separator = " - "))
+    tm_polygons(
+        "part_exp_bio",
+        col = "grey60",
+        fill.scale = tm_scale_intervals(
+            style = "pretty", # default
+            n = 5,
+            values = "brewer.bu_gn",
+            label.format = tm_label_format(
+                text.separator = " - "
+                )
+        ),
+        fill.legend = tm_legend(
+            title = "part en %",
+            lwd = 0.25, # lwd = line width
+            reverse = TRUE,
+        )
+    )
 ```
 
-![](images/clipboard-1074117001.png){fig-align="center"}
+<!-- ![](images/clipboard-1074117001.png){fig-align="center"} -->
+
+---
+
+Carte interactive avec symbologie sur mesure.
+
+![](images/2-3-cas_part_expl_bio-tm_polygons_interactif.png){fig-align="center"}
 
 ## Carte à symboles proportionnels
 
-``` r
+```r
 tmap_mode("plot")
 
 tm_shape(bio) +
@@ -150,7 +164,7 @@ tm_shape(bio) +
 
 ## Carte choroplèthe + symboles proportionnels
 
-``` r
+```r
 tm_shape(bio) +
   tm_polygons(
             "part_exp_bio", 
@@ -171,9 +185,9 @@ tm_shape(bio) +
 
 ## Variante
 
-Une alternative consiste à faire varier la taille + la couleur du cercle : les couleurs des classes de la variable représentée en aplats sont placées dans les ronds proportionnels
+Une alternative consiste à faire varier la taille + la couleur du cercle : les couleurs des classes de la variable représentée en aplats sont placées dans les ronds proportionnels.
 
-``` r
+```r
 m <- tm_shape(bio) +
   tm_borders(col = "grey30",
              lwd = 0.25,) +
@@ -190,7 +204,7 @@ m <- tm_shape(bio) +
 
 ![](images/clipboard-1182804328.png){fig-align="center"}
 
-``` r
+```r
 tmap_mode("view")
 ```
 
@@ -198,13 +212,13 @@ tmap_mode("view")
 
 ## Couleurs et palettes
 
-Les couleurs sont à préciser dans l'argument palette de la fonction `tm_polygons()`. Il faut autant de couleurs qu'il y a de classes.
+Les couleurs sont à préciser dans l'argument `palette` de la fonction `tm_polygons()`. Il faut autant de couleurs qu'il y a de classes.
 
-Lien utile : [Colors in R](www.stat.columbia.edu/~tzheng/files/Rcolor.pdf). Ce document présente l'ensemble des couleurs disponibles sous R
+Lien utile : [Colors in R](www.stat.columbia.edu/~tzheng/files/Rcolor.pdf). Ce document présente l'ensemble des couleurs disponibles sous R.
 
 La fonction `tmaptools::palette_explorer()` permet de visualiser des palettes de couleurs
 
-``` r
+```r
 pal_vir <- viridisLite::viridis(5)
 colorspace::specplot(pal_vir)
 ```
@@ -213,13 +227,13 @@ colorspace::specplot(pal_vir)
 
 ------------------------------------------------------------------------
 
-``` r
+```r
 pal_div <- tmaptools::get_brewer_pal("PRGn", n = 7)
 ```
 
 ![](images/clipboard-2521962833.png){fig-align="center"}
 
-``` r
+```r
 colorspace::specplot(pal_div)
 ```
 
@@ -227,7 +241,7 @@ colorspace::specplot(pal_div)
 
 ------------------------------------------------------------------------
 
-``` r
+```r
 library(RColorBrewer)
 head(brewer.pal.info)
 ```
@@ -244,17 +258,17 @@ head(brewer.pal.info)
 
 ## Construction des classes → méthode automatique
 
-L'argument style de la fonction tm_polygons() peut recevoir les valeurs suivantes : "cat", "fixed", "sd", "equal", "pretty", "quantile", "kmeans", "hclust", "bclust", "fisher" etc. et l'argument n reçoit le nombre de classes à construire
+L'argument `style` de la fonction `tm_polygons()` peut recevoir les valeurs suivantes : `"cat"`, `"fixed"`, `"sd"`, `"equal"`, `"pretty"`, `"quantile"`, `"kmeans"`, `"hclust"`, `"bclust"`, `"fisher"`...
+L'argument `n` reçoit le nombre de classes à construire.
 
--   "sd" : n classes construites à partir de la moyenne et dont les amplitudes valent un écart-type (sauf parfois les - classes extrêmes)
--   "equal" : n classes d'amplitudes égales
--   "quantile" : n classes de même effectif
--   "fisher" ou "jenks" : n classes construites avec une méthode qui minimise les variances intra-classes et maximise les variances inter-classes
--   ...
+- `"sd"` : *n* classes construites à partir de la moyenne et dont les amplitudes valent un écart-type (sauf parfois les classes extrêmes)
+- `"equal"` : *n* classes d'amplitudes égales
+- `"quantile"` : *n* classes de même effectif
+- `"fisher"` ou `"jenks"` : n classes construites avec une méthode qui minimise les variances intra-classes et maximise les variances inter-classes
 
 ------------------------------------------------------------------------
 
-``` r
+```r
 #| code-fold: true
 #| results: hide
 #| output: false
@@ -342,7 +356,7 @@ exemples_classes <- methodes |>
 
 ------------------------------------------------------------------------
 
-``` r
+```r
 #| echo: false
 #| ouput: false
 #| results: asis
@@ -366,7 +380,7 @@ Exemple - La méthode quantile à 5 classes donne les ruptures suivantes : {2.
 
 ## Habillage de la carte
 
-``` r
+```r
 tmap_mode("plot")
 
 m <- tm_shape(bio) +
@@ -422,7 +436,8 @@ tmap_save(m, "pcent_bio_fr.png",
 
 ::::: columns
 ::: {.column width="45%"}
-``` r
+
+```r
 tmap_mode("plot")
 
 tm_shape(bio) +
@@ -438,6 +453,7 @@ tm_polygons("part_exp_bio",
 tm_facets("insee_reg") +
 tm_layout("Exploitations\nen conduite bio\npar région")
 ```
+
 :::
 
 ::: {.column width="55%"}
@@ -451,7 +467,8 @@ tm_layout("Exploitations\nen conduite bio\npar région")
 
 ::::: columns
 ::: {.column width="45%"}
-``` r
+
+```r
 library(cartogram)
 
 bio |> 
@@ -464,6 +481,7 @@ bio |>
   tm_text("insee_dep", size = 0.8) +
   tm_layout(legend.outside = TRUE)
 ```
+
 :::
 
 ::: {.column width="55%"}
@@ -477,7 +495,8 @@ bio |>
 
 ::::: columns
 ::: {.column width="45%"}
-``` r
+
+```r
 library(geogrid)
 
 bio |> 
@@ -489,6 +508,7 @@ bio |>
   tm_text("insee_dep", size = 0.8) +
   tm_layout(legend.outside = TRUE)
 ```
+
 :::
 
 ::: {.column width="55%"}
@@ -500,40 +520,40 @@ bio |>
 
 ## Liens utiles
 
--   La [vignette du package tmap](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
--   Le [livre](https://r-tmap.github.io/tmap-book/)
--   Les [couleurs de R](https://r-charts.com/colors/)
+- La [vignette du package tmap](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
+- Le [livre](https://r-tmap.github.io/tmap-book/)
+- Les [couleurs de R](https://r-charts.com/colors/)
 
 ## Aller plus loin
 
--   GUR : [Cartographie avec R](https://ged.national.agri/gedsi/nxdoc/default/88702758-b87d-4eac-bc4d-218fcfdbf238/view_documents)
--   La formation MTES [Analyses spatiales avec R](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/)
+- GUR : [Cartographie avec R](https://ged.national.agri/gedsi/nxdoc/default/88702758-b87d-4eac-bc4d-218fcfdbf238/view_documents)
+- La formation MTES [Analyses spatiales avec R](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/)
 
 ## Références
 
--   Crameri, Fabio, Grace E. Shephard, et Philip J. Heron. 2020. « The Misuse of Colour in Science Communication ». *Nature Communications 11* (1): 5444. <https://doi.org/10.1038/s41467-020-19160-7>.
+- Crameri, Fabio, Grace E. Shephard, et Philip J. Heron. 2020. « The Misuse of Colour in Science Communication ». *Nature Communications 11* (1): 5444. <https://doi.org/10.1038/s41467-020-19160-7>.
 
--   Engelaere-Lefebvre, Juliette, Maël Theulière, et Jean-Daniel Lomenède. 2023. « Analyses spatiales avec R ». *Formations R aux MTES & MCTRCT*. [https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/.)
+- Engelaere-Lefebvre, Juliette, Maël Theulière, et Jean-Daniel Lomenède. 2023. « Analyses spatiales avec R ». *Formations R aux MTES & MCTRCT*. [https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/.)
 
--   Harrower, Mark, et Cynthia A. Brewer. 2003. « ColorBrewer. Org: An Online Tool for Selecting Colour Schemes for Maps ». *The Cartographic Journal 40* (1): 27‑37. <https://doi.org/10.1179/000870403235002042>.
+- Harrower, Mark, et Cynthia A. Brewer. 2003. « ColorBrewer. Org: An Online Tool for Selecting Colour Schemes for Maps ». *The Cartographic Journal 40* (1): 27‑37. <https://doi.org/10.1179/000870403235002042>.
 
--   Loonis, Vincent, et Marie-Pierre de Bellefon. 2018. Manuel d’analyse spatiale. Théorie et mise en œuvre pratique avec R. Insee Méthodes 131. Montrouge: INSEE - Eurostat. <https://www.insee.fr/fr/information/3635442>.
+- Loonis, Vincent, et Marie-Pierre de Bellefon. 2018. Manuel d’analyse spatiale. Théorie et mise en œuvre pratique avec R. Insee Méthodes 131. Montrouge: INSEE - Eurostat. <https://www.insee.fr/fr/information/3635442>.
 
--   Lovelace, Robin, Jakub Nowosad, et Jannes Muenchow. 2023. Geocomputation with R. <https://r.geocompx.org/>.
+- Lovelace, Robin, Jakub Nowosad, et Jannes Muenchow. 2023. Geocomputation with R. <https://r.geocompx.org/>.
 
--   Pebesma, Edzer, et Roger Bivand. 2023. Spatial Data Science: With Applications in R. New York: Chapman and Hall/CRC. <https://doi.org/10.1201/9780429459016>.
+- Pebesma, Edzer, et Roger Bivand. 2023. Spatial Data Science: With Applications in R. New York: Chapman and Hall/CRC. <https://doi.org/10.1201/9780429459016>.
 
--   Rowe, Francisco, et Dani Arribas-Bel. 2022. Spatial Modelling for Data Scientists. University of Liverpool. <https://gdsl-ul.github.io/san/>.
+- Rowe, Francisco, et Dani Arribas-Bel. 2022. Spatial Modelling for Data Scientists. University of Liverpool. <https://gdsl-ul.github.io/san/>.
 
 ------------------------------------------------------------------------
 
--   Theulière, Maël. 2019. « Les données spatiales avec R ». <https://maeltheuliere.github.io/rspatial/index.html>.
+- Theulière, Maël. 2019. « Les données spatiales avec R ». <https://maeltheuliere.github.io/rspatial/index.html>.
 
--   Wimberly, Michael C. 2023. Geographic Data Science with R: Visualizing and Analyzing Environmental Change. <https://bookdown.org/mcwimberly/gdswr-book/>.
+- Wimberly, Michael C. 2023. Geographic Data Science with R: Visualizing and Analyzing Environmental Change. <https://bookdown.org/mcwimberly/gdswr-book/>.
 
--   Zeileis, Achim, Kurt Hornik, et Paul Murrell. 2009. « Escaping RGBland: Selecting Colors for Statistical Graphics ». Research {{Report Series}} 61. Vienna: Department of Statistics and Mathematics, WU Vienna University of Economics and Business. <http://www.sciencedirect.com/science/article/pii/S0167947308005549>.
+- Zeileis, Achim, Kurt Hornik, et Paul Murrell. 2009. « Escaping RGBland: Selecting Colors for Statistical Graphics ». Research {{Report Series}} 61. Vienna: Department of Statistics and Mathematics, WU Vienna University of Economics and Business. <http://www.sciencedirect.com/science/article/pii/S0167947308005549>.
 
--   Zeileis, Achim, et Paul Murrell. 2023. « Coloring in R’s Blind Spot ». The R Journal 15 (3): 240‑56. <https://doi.org/10.32614/RJ-2023-071>.
+- Zeileis, Achim, et Paul Murrell. 2023. « Coloring in R’s Blind Spot ». The R Journal 15 (3): 240‑56. <https://doi.org/10.32614/RJ-2023-071>.
 
 # Exercices
 
@@ -541,9 +561,10 @@ bio |>
 
 Réaliser la carte de densité de population communale du département de l'Aisne.
 
-Le fichier de données est le fichier *popD02_2013.rds* . Le fond de carte est le fichier *ComD02.TAB*.
+Le fichier de données est le fichier *popD02_2013.rds*.
+Le fond de carte est le fichier *ComD02.TAB*.
 
-``` r
+```r
 #| code-fold: true
 
 com <- read_sf("donnees_exercices/ComD02.TAB") |> 
@@ -561,7 +582,7 @@ com_pop <- com |>
 
 ## Densité de pop
 
-``` r
+```r
 #| code-fold: true
 
 com_pop |> 
@@ -580,7 +601,7 @@ Réaliser la carte d'évolution de la population communale du département de l'
 
 Le fichier de données et le fond de carte sont les mêmes que pour l'exercice précédent.
 
-``` r
+```r
 #| code-fold: true
 
 com_pop |> 
@@ -594,7 +615,7 @@ com_pop |>
 
 Reprendre la carte précédente en construisant des classes manuelles.
 
-``` r
+```r
 #| code-fold: true
 
 com_pop |> 
@@ -611,7 +632,7 @@ com_pop |>
 
 Reprendre la carte précédente en personnalisant les couleurs.
 
-``` r
+```r
 #| code-fold: true
 
 com_pop |> 
@@ -632,7 +653,7 @@ pour inverser la palette : `"-PRGn"`
 
 Habiller la carte construite au fil des exercices précédents.
 
-``` r
+```r
 #| code-fold: true
 
 villes <- com_pop |> 
@@ -684,7 +705,7 @@ m
 
 Exporter la carte au format PDF.
 
-``` r
+```r
 #| code-fold: true
 
 tmap_save(m, "population_002_2008-2013.pdf", 
