@@ -2,14 +2,15 @@
 
 ## Les packages utilisés dans ce module
 
-- `{sf}` (4.4) : ensemble de fonctions pour gérer les objets spatiaux (import, traitement, export...) ([documentation](https://r-spatial.github.io/sf/))
-- `{tmap}` (4.2) : réalisation simple de cartes ([documentation](https://r-tmap.github.io/tmap/))
-- `{RcolorBrewer}` : palettes de couleurs décrites sur <https://colorbrewer2.org/>
+- `{sf}` (4.4) : fonctions sur les objets spatiaux (import, traitement, export...) ([documentation](https://r-spatial.github.io/sf/))
+- `{tmap}` (4.2) : réalisation de cartes ([documentation](https://r-tmap.github.io/tmap/))
+- `{cols4all}` ([documentation](https://cols4all.github.io/cols4all-R)) et `{colorspace}` ([documentation](https://colorspace.r-forge.r-project.org)) pour la sélection de couleurs.
 
 ```r
 library(tidyverse)
 library(sf)
 library(tmap)
+library(cols4all)
 library(janitor)
 library(ragg)         # remplace grDevices (défaut) <https://ragg.r-lib.org/>
 options(OutDec = ".")
@@ -24,6 +25,8 @@ Autres possibilités pour la cartographie avec `{ggplot2} + {ggspatial}`, `{maps
 - Cartes statiques ou interactives.
 - Site officiel : <https://r-tmap.github.io/tmap/>.
 - Livre : <https://r.geocompx.org/>.
+
+Changements **substantiels** d'interface depuis la v4.0, voir [Releases](https://github.com/r-tmap/tmap/releases/tag/v4.0).
 
 ## Les étapes de la réalisation d'une carte
 
@@ -99,7 +102,7 @@ bio <- dep |>
 
 ------------------------------------------------------------------------
 
-Affichage par défaut avec `plot(bio |> select(geom, part_exp_bio))`.
+Affichage minimaliste par défaut avec fonction [`sf::plot()`](https://r-spatial.github.io/sf/reference/plot.html), e.g. `plot(bio |> select(geom, part_exp_bio))`.
 
 ![](images/2-2-cas_part_expl_bio-plot.png){fig-align="center"}
 
@@ -110,14 +113,14 @@ tm_shape(bio) +
   tm_polygons("part_exp_bio")
 ```
 
-![](images/2-3-cas_part_expl_bio-tm_polygons.png){fig-align="center"}
+![](images/2-4-cas_part_expl_bio-tm_polygons.png)
 
 ------------------------------------------------------------------------
 
 ## Carte interactive
 
 ```r
-# mode "view" interactif <https://r-tmap.github.io/tmap/reference/tmap_mode.html>
+# "view" = interactif <https://r-tmap.github.io/tmap/reference/tmap_mode.html>
 tmap_mode("view")
 tm_shape(bio) +
     tm_polygons(
@@ -129,7 +132,7 @@ tm_shape(bio) +
             values = "brewer.bu_gn",
             label.format = tm_label_format(
                 text.separator = " - "
-                )
+            )
         ),
         fill.legend = tm_legend(
             title = "part en %",
@@ -143,116 +146,217 @@ tm_shape(bio) +
 
 ---
 
-Carte interactive avec symbologie sur mesure.
+Carte _interactive_ avec symbologie sur mesure.
 
-![](images/2-3-cas_part_expl_bio-tm_polygons_interactif.png){fig-align="center"}
+![](images/2-4-cas_part_expl_bio-tm_polygons_interactif.png){fig-align="center"}
 
 ## Carte à symboles proportionnels
 
 ```r
+# "plot" = statique <https://r-tmap.github.io/tmap/reference/tmap_mode.html>
 tmap_mode("plot")
 
 tm_shape(bio) +
-  tm_borders(col = "grey30",
-              lwd = 0.25) +
-  tm_symbols(size = "n_exp", 
-             col = "darkolivegreen4",
-             title.size = "Nombre d'exploitations")
+    tm_borders(col = "grey30", lwd = 0.25) +
+    tm_symbols(
+        size = "n_exp",
+        size.scale = tm_scale(values.scale = 1.5),
+        fill = "darkolivegreen4",
+        size.legend = tm_legend(
+            title = "Nombre d'exploitations en AB",
+            orientation = "landscape",
+            position = tm_pos_in()
+        )
+    )
 ```
 
-![](images/clipboard-223446850.png){fig-align="center"}
+---
+
+<!-- ![](images/clipboard-223446850.png){fig-align="center"} -->
+
+![](images/2-5-cas_part_expl_bio-symb-proportionnels.png){fig-align="center"}
 
 ## Carte choroplèthe + symboles proportionnels
 
 ```r
 tm_shape(bio) +
-  tm_polygons(
-            "part_exp_bio", 
-            style = "pretty",
-            n = 5,
-            title = "part en %", 
-            palette = "BuGn",
-            border.col = "grey30",
-            lwd = 0.25,
-            legend.reverse = TRUE, 
-            legend.format = list(text.separator = " - ")) + 
-  tm_symbols(size = "n_exp", 
-           col = "darkolivegreen4",
-           title.size = "nombre d'exploitations")
+    tm_polygons(
+        "part_exp_bio",
+        col = "grey60",
+        fill.scale = tm_scale_intervals(
+            values = "brewer.bu_gn",
+        ),
+        fill.legend = tm_legend(
+            title = "Part d'exploitations en AB (en %)",
+            reverse = TRUE,
+        )
+    ) +
+    tm_symbols(
+        size = "n_exp",
+        size.scale = tm_scale(values.scale = 1.5),
+        fill = "darkolivegreen4",
+        size.legend = tm_legend(
+            title = "Nombre d'exploitations en AB",
+            reverse = TRUE,
+        )
+    )
 ```
 
-![](images/clipboard-1095066075.png){fig-align="center"}
+---
+
+<!-- ![](images/clipboard-1095066075.png){fig-align="center"} -->
+
+![](images/2-6-cas_part_expl_bio-symb-et_aplat.png){fig-align="center"}
 
 ## Variante
 
 Une alternative consiste à faire varier la taille + la couleur du cercle : les couleurs des classes de la variable représentée en aplats sont placées dans les ronds proportionnels.
 
 ```r
-m <- tm_shape(bio) +
-  tm_borders(col = "grey30",
-             lwd = 0.25,) +
-  tm_symbols(size = "n_exp", 
-             col = "part_exp_bio",
-             palette = "BuGn",
-             title.col = "part (%)",
-             title.size = "nombre\nd'exploitations",
-             legend.format = list(fun = \(x) format(x, big.mark = " "),
-                                  text.separator = " - "),
-             legend.col.reverse = TRUE,
-             legend.size.is.portrait = TRUE) 
+tm_shape(bio) +
+    tm_borders(col = "grey30", lwd = 0.25) +
+    tm_symbols(
+        fill = "part_exp_bio",
+        fill.scale = tm_scale(
+            values = "brewer.bu_gn"
+        ),
+        fill.legend = tm_legend(
+            title = "Part d'exploitations en AB (en %)",
+            reverse = TRUE,
+            position = tm_pos_in("left", "bottom"),
+        ),
+        size = "n_exp",
+        size.scale = tm_scale(
+            values.scale = 1.5
+        ),
+        size.legend = tm_legend(
+            title = "Nombre d'exploitations en AB",
+            position = tm_pos_in("left", "bottom"),
+            frame = FALSE,
+            bg.alpha = 0.0
+        ),
+    )
 ```
 
-![](images/clipboard-1182804328.png){fig-align="center"}
+---
+
+<!-- ![](images/clipboard-1182804328.png){fig-align="center"} -->
+
+![](images/2-7-cas_part_expl_bio-variante_symbole.png){fig-align="center"}
+
+---
 
 ```r
 tmap_mode("view")
 ```
 
-![](images/clipboard-1991139768.png){fig-align="center"}
+![](images/2-7-cas_part_expl_bio-variante_symbole_interactif.png){fig-align="center"} 
+
+<!-- ![](images/clipboard-1991139768.png){fig-align="center"} -->
 
 ## Couleurs et palettes
 
-Les couleurs sont à préciser dans l'argument `palette` de la fonction `tm_polygons()`. Il faut autant de couleurs qu'il y a de classes.
+Les couleurs sont à préciser dans l'argument `values` de la fonction `tm_scale()` des arguments `.scale` comme `fill.scale`.
+<!-- Il faut _autant de couleurs qu'il y a de classes_. -->
 
-Lien utile : [Colors in R](www.stat.columbia.edu/~tzheng/files/Rcolor.pdf). Ce document présente l'ensemble des couleurs disponibles sous R.
+- Le site <https://r-charts.com/colors/> présente les couleurs de base en R.
+- Le package [`{cols4all}`](https://cols4all.github.io/cols4all-R/) (par l'auteur de `{tmap}`) propose une fonction `cols4all::c4a_gui()` qui permet de visualiser des palettes de couleurs, en simulant les déficiences visuelles.
 
-La fonction `tmaptools::palette_explorer()` permet de visualiser des palettes de couleurs
+---
 
 ```r
-pal_vir <- viridisLite::viridis(5)
+pal_vir <- c4a("viridis", n = 5)
 colorspace::specplot(pal_vir)
 ```
 
-![](images/clipboard-1060732439.png){fig-align="center"}
+![](images/2-8-viridis_specplot.png){fig-align="center"}
+<!-- ![](images/clipboard-1060732439.png){fig-align="center"} -->
 
 ------------------------------------------------------------------------
 
 ```r
-pal_div <- tmaptools::get_brewer_pal("PRGn", n = 7)
-```
-
-![](images/clipboard-2521962833.png){fig-align="center"}
-
-```r
+pal_div <- c4a("brewer.prgn", n = 7)
 colorspace::specplot(pal_div)
 ```
 
-![](images/clipboard-3779356658.png){fig-align="center"}
+![](images/2-8-prgn_specplot.png){fig-align="center"}
+<!-- ![](images/clipboard-3779356658.png){fig-align="center"} -->
 
 ------------------------------------------------------------------------
 
 ```r
-library(RColorBrewer)
-head(brewer.pal.info)
+c4a_types()
 ```
 
-![](images/clipboard-3178298197.png)
+```raw
+  type                          description
+1  cat                          categorical
+2  seq                           sequential
+3  div                            diverging
+4  cyc                               cyclic
+5 bivs  bivariate (sequential x sequential)
+6 bivc bivariate (sequential x categorical)
+7 bivd   bivariate (sequential x diverging)
+8 bivg bivariate (sequential x desaturated)
+```
+
+---
+
+```r
+c4a_overview()
+```
+
+```raw
+       series                                         description cat seq div cyc bivs bivc bivd bivg
+1     bivario            Palettes from the Python library bivario   0   0   0   0   25    0    0    0
+2      brewer                                ColorBrewer palettes   8  18   9   0    2    2    1    0
+3       carto                          Palettes designed by CARTO   6  21   7   0    0    0    0    0
+4    cols4all                  cols4all palettes (in development)  14   0   2   0    2    0    2    5
+5         gmt                 Palettes from General Mapping Tools   0  19   4   0    0    0    0    0
+6         hcl  Palettes from the Hue Chroma Luminance color space   9  23  11   6    0    0    0    0
+7      kovesi                   Palettes designed by Peter Kovesi   0  28  14   8    0    0    0    0
+8  matplotlib         Palettes from the Python library matplotlib   0  51  12   3    0    0    0    0
+9         met Palettes inspired by The Metropolitan Museum of Art  33   8  14   0    0    1    0    0
+10      meteo           Palettes by Oliver Fuhrer from MeteoSwiss   2  14   7   0    0    0    0    0
+11       misc                              Miscellaneous palettes   5   0   0   0    0    3    0    0
+12      ocean          Colormaps for Oceanography by Thyng et al.   0  15   3   0    0    0    0    0
+13      parks                 Palettes inspired by National Parks  22   5   3   0    0    0    0    0
+14       poly               Qualitative palettes with many colors   9   0   0   0    0    0    0    0
+15    powerbi                    Palettes from Microsoft Power BI  19   1   4   0    0    0    0    0
+16      scico             Scientific colour maps by Fabio Crameri  21  21  10   5    0    2    0    1
+17    seaborn            Palettes from the Python library Seaborn   6   4   2   0    0    0    0    0
+18    stevens                Bivariate palettes by Joshua Stevens   0   5   0   0    5    0    0    0
+19    tableau                        Palettes designed by Tableau  29  23  28   0    0    3    0    0
+20        tol                       Palettes designed by Paul Tol   8   8   4   0    0    0    0    0
+21        wes                   Palettes from Wes Anderson movies  23   0   1   0    0    0    0    0
+```
+
+<!-- ![](images/clipboard-3178298197.png) -->
 
 ------------------------------------------------------------------------
 
-`{.' .r} str(brewer.pal.info)`
+```r
+c4a_scores(series = "brewer", type = "div") |> as_tibble()
+```
 
-![](images/clipboard-3609586085.png){fig-align="center"}
+```raw
+# A tibble: 9 x 37
+  name   series fullname type      n min_dist nameability min_step max_step inter_wing_dist tri_ineq  Cmax     H    HL    HR  Lmid Hwidth HwidthL HwidthR Lrange Crange fairness CRmin
+  <chr>  <chr>  <chr>    <chr> <dbl>    <dbl>       <dbl>    <dbl>    <dbl>           <dbl>    <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl>   <dbl>   <dbl>  <dbl>  <dbl>    <dbl> <dbl>
+1 br_bg  brewer brewer.~ div       9       NA          NA     3.23       NA            7.52    -0.82    72   110    54   180    97    145      33       6     58     72       64  1.06 
+2 pi_yg  brewer brewer.~ div       9       NA          NA     3.84       NA           13.6      2.91    97    44   336   112    97    151      16      16     53     97       23  1.07 
+3 prgn   brewer brewer.~ div       9       NA          NA     8.25       NA           12.9      6.33    62   360   300   127    97    187      14      15     65     62       78  1.13 
+4 pu_or  brewer brewer.~ div       9       NA          NA     7.21       NA           15.5      5.27    98   340    44   270    97    158      29      19     70     98       22  1.09 
+5 rd_bu  brewer brewer.~ div       9       NA          NA     7.22       NA           12.1      5.32   111   313    26   238    97    177      32      27     59    111       10  1    
+6 rd_gy  brewer brewer.~ div       9       NA          NA     6.5        NA            6.34    -2.35   111    26    26   180   100     32      32       0     67    111       10  1.01 
+7 rd_yl~ brewer brewer.~ div       9       NA          NA     7.56       NA           22.1      3.21   132   360    40   230    99    237      55      41     51    120        6  1.03 
+8 rd_yl~ brewer brewer.~ div       9       NA          NA     6          NA            0.52    -7.69   132    75    40   118    99    125      56      40     51     87       38  1.03 
+9 spect~ brewer brewer.~ div       9       NA          NA     3.84       NA            0.53    -6.25   115   360    38   167    99    233      61     147     49     72       64  1.1  
+# i 14 more variables: CRwt <dbl>, CRbk <dbl>, Blues <dbl>, cbfriendly <dbl>, chroma <chr>, Hspread <dbl>, fair <chr>, hues <chr>, HwidthLR <dbl>, equiluminance <lgl>,
+#   contrastWT <lgl>, contrastBK <lgl>, float <lgl>, nameable <lgl>
+```
+
+<!-- ![](images/clipboard-3609586085.png){fig-align="center"} -->
 
 # Classes
 
