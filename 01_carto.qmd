@@ -1,4 +1,8 @@
-# Les packages
+# Introduction
+
+## Cartographie thématique
+
+Ici, quelques rappels à l'oral.
 
 ## Les packages utilisés dans ce module
 
@@ -57,11 +61,30 @@ dep <- read_sf(gpkg, layer = "departement") |>
   st_transform("EPSG:2154")
 ```
 
-![](images/clipboard-3749509872.png){fig-align="center"}
+---
+
+
+```raw
+r$> st_layers(gpkg)
+Driver: GPKG 
+Available layers:
+       layer_name geometry_type features fields crs_name
+1        cheflieu         Point    34877      7   WGS 84
+2     commune_int                 102173      0   WGS 84
+3 departement_int                    238      0   WGS 84
+4      region_int                     23      0   WGS 84
+5        epci_int                   3526      0   WGS 84
+6     departement                    103      4   WGS 84
+7         commune                  34877     12   WGS 84
+8          region                     19      3   WGS 84
+9            epci                   1266      4   WGS 84
+```
+
+
 
 L'objet `dep` combine des polygones (le contour des départements, attribut `geom`) et des données dans un objet de type `data.frame` ou `tibble`.
 
-------------------------------------------------------------------------
+-----------------------------------------------------------------
 
 Ce `data.frame` se comporte comme n'importe quel autre (même utilisation des fonctions `str()`, `names()`, les fonctions de `{dplyr}`...).
 
@@ -456,133 +479,159 @@ classIntervals(bio$part_exp_bio, style = "jenks", n = 5)
 ```r
 tmap_mode("plot")
 
-m <- tm_shape(bio) +
-  tm_polygons("part_exp_bio", 
-              style = "pretty",
-              n = 5,
-              title = "part en %", 
-              palette = "BuGn",
-              border.col = "grey30",
-              lwd = 0.25,
-              legend.reverse = TRUE, 
-              legend.format = list(text.separator = " - ")) + 
-  tm_text("insee_dep",
-          size = 0.5,
-          remove.overlap = TRUE) +
-  tm_layout("Exploitations\nen conduite bio", 
-            scale = .8,
-            legend.position = c("left", "center"),
-            fontfamily = "Marianne") +
-  tm_credits(paste0("données Agreste RA 2020\nfond carto. d'après IGN AdminExpress 2023\n", 
-                    Sys.Date()),
-             size = 0.5,
-             position = c(0.2, 0.01)) +
-  tm_scale_bar(color.dark = "grey40",
-               width = 0.2,
-               position = c(0.45, 0.01)) +
-  tm_compass(type = "rose",
-             position = c(0.7, 0.01),
-             size = 1.5) +
-  tm_logo("logo_masa.png", 
-          position = c("left", "bottom"), 
-          height = 3)
+m_base <- tm_shape(bio) +
+    tm_polygons(
+        "part_exp_bio",
+        col = "grey60",
+        fill.scale = tm_scale_intervals(
+            values = "brewer.bu_gn",
+        ),
+        fill.legend = tm_legend(
+            title = "Part en %",
+            reverse = TRUE,
+            position = tm_pos_in("left", "center"),
+            frame = FALSE,
+            bg.alpha = 0.0
+        )
+    )
 
-m
+m <- m_base +
+    tm_layout(
+        text.fontfamily = "Marianne"
+    ) +
+    tm_text(
+        text = "insee_dep",
+        size = 0.5,
+        options = opt_tm_text(remove_overlap = TRUE)
+    ) +
+    tm_title_out(
+        text = "Exploitations (ayant au moins une parcelle)\nen Agriculture Biologique (AB)"
+    ) +
+    tm_credits(
+        text = "Recensement Agricole 2020 - Agreste.\nFond carto. IGN Admin Express 2025.",
+        position = tm_pos_in("left", "bottom")
+    ) +
+    tm_scalebar(
+        color.dark = "grey40",
+        width = 24,
+        position = tm_pos_in("center", "bottom")
+    ) +
+    tm_compass(
+        type = "4star",
+        size = 5,
+        position = tm_pos_in("right", "top")
+    ) +
+    tm_logo(
+        file = "./img/logos/png/logoMASAF.png",
+        position = tm_pos_in("left", "top"),
+        height = 5
+    )
 
-tmap_save(m, "pcent_bio_fr.png", 
-          width = 20, units = "cm", asp = 1.618,
-          dpi = 300,
-          device = agg_png)
+tmap_save(
+    m,
+    "images/4-1-habillage_carte.png",
+    width = 20,
+    units = "cm",
+    asp = 1.618,
+    dpi = 300,
+    device = agg_png
+)
 
-
-# ou pour une carte interactive :
-# 
+# Pour une carte interactive :
 # tmap_mode("view")
 # tmap_save(m, "pcent_bio_fr.html")
 ```
 
-![](images/clipboard-79388324.png){fig-align="center"}
+---
+
+![](images/4-1-habillage_carte.png){fig-align="center"}
 
 ## Facettes
 
-::::: columns
-::: {.column width="45%"}
-
 ```r
-tmap_mode("plot")
-
-tm_shape(bio) +
-tm_polygons("part_exp_bio", 
-            style = "pretty",
-            n = 5,
-            title = "part en %", 
-            palette = "BuGn",
-            border.col = "grey30",
-            lwd = 0.25,
-            legend.reverse = TRUE, 
-            legend.format = list(text.separator = " - ")) +
-tm_facets("insee_reg") +
-tm_layout("Exploitations\nen conduite bio\npar région")
+m_facet <- tm_shape(bio) +
+    tm_polygons(
+        "part_exp_bio",
+        col = "grey60",
+        fill.scale = tm_scale_intervals(
+            values = "brewer.bu_gn",
+        ),
+        fill.legend = tm_legend(
+            title = "Part en %",
+            reverse = TRUE,
+            position = tm_pos_out(),
+        )
+    ) +
+    tm_facets(by = "insee_reg") +
+    tm_title(text = "Exploitations en AB par région")
 ```
 
-:::
+---
 
-::: {.column width="55%"}
-![](images/clipboard-1076412612.png){fig-align="center"}
-:::
-:::::
+![](images/4-2-facettes_regions.png){fig-align="center"}
 
 ## Cartogramme
 
-::::: columns
-::: {.column width="45%"}
-
 ```r
+
 library(cartogram)
 
-bio |> 
-  cartogram_dorling("n_exp") |> 
-  tm_shape() + 
-  tm_polygons("n_exp", 
-              legend.reverse = TRUE, 
-              style = "quantile",
-              n = 5) +
-  tm_text("insee_dep", size = 0.8) +
-  tm_layout(legend.outside = TRUE)
+bio |>
+    # Construct a cartogram which represents each geographic
+    # region as non-overlapping circles 
+    cartogram_dorling("n_exp") |>
+    tm_shape() +
+    tm_polygons(
+        "n_exp",
+        fill.scale = tm_scale_intervals(
+            values = "brewer.bu_gn",
+            style = "quantile",
+            n = 5
+        ),
+        fill.legend = tm_legend(
+            title = "Nombre d'exploitations",
+            reverse = TRUE,
+        )
+    ) +
+    tm_text(
+        text = "insee_dep",
+        size = 0.8,
+        options = opt_tm_text(remove_overlap = TRUE)
+    )
 ```
 
-:::
+---
 
-::: {.column width="55%"}
-![](images/clipboard-3897928796.png){fig-align="center"}
-:::
-:::::
+![](images/4-3-cartogramme_dorling.png){fig-align="center"}
 
 
 ## Grilles
 
-::::: columns
-::: {.column width="45%"}
 
 ```r
-library(geogrid)
+library(tilemaps)
 
-bio |> 
-  calculate_grid(grid_type = "hexagonal", seed = 3) |> 
-  assign_polygons(bio, new_polygons = _) |>  
-  tm_shape() + 
-  tm_polygons("part_exp_bio",
-              legend.reverse = TRUE) +
-  tm_text("insee_dep", size = 0.8) +
-  tm_layout(legend.outside = TRUE)
+bio_metropole <- bio |>
+    filter(insee_reg != "94") |>
+    mutate(
+        tile_map = generate_map(geom, square = FALSE, flat_topped = TRUE)
+    )
+bio_metropole |>
+    st_set_geometry("tile_map") |>
+    tm_shape() +
+    tm_polygons(
+        "part_exp_bio",
+        fill.legend = tm_legend(
+            title = "Part d'expl. en AB",
+            reverse = TRUE
+        )
+    ) +
+    tm_text("insee_dep")
 ```
+---
 
-:::
+![](images/4-4-grilles_hexagonales.png){fig-align="center"}
 
-::: {.column width="55%"}
-![](images/clipboard-3128090706.png){fig-align="center"}
-:::
-:::::
 
 # Bibliographie
 
@@ -592,7 +641,7 @@ bio |>
 - Le [livre](https://r-tmap.github.io/tmap-book/)
 - Les [couleurs de R](https://r-charts.com/colors/)
 
-## Aller plus loin
+Pour aller plus loin
 
 - GUR : [Cartographie avec R](https://ged.national.agri/gedsi/nxdoc/default/88702758-b87d-4eac-bc4d-218fcfdbf238/view_documents)
 - La formation MTES [Analyses spatiales avec R](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/)
@@ -607,7 +656,7 @@ bio |>
 - Pebesma, Edzer, et Roger Bivand. 2023. Spatial Data Science: With Applications in R. New York: Chapman and Hall/CRC. <https://doi.org/10.1201/9780429459016>.
 - Rowe, Francisco, et Dani Arribas-Bel. 2022. Spatial Modelling for Data Scientists. University of Liverpool. <https://gdsl-ul.github.io/san/>.
 
-------------------------------------------------------------------------
+-------------------
 
 - Theulière, Maël. 2019. « Les données spatiales avec R ». <https://maeltheuliere.github.io/rspatial/index.html>.
 - Wimberly, Michael C. 2023. Geographic Data Science with R: Visualizing and Analyzing Environmental Change. <https://bookdown.org/mcwimberly/gdswr-book/>.
@@ -616,159 +665,71 @@ bio |>
 
 # Exercices
 
-## Données
+## Préparation des données
 
-Réaliser la carte de densité de population communale du département de l'Aisne.
+Objectifs _Réaliser la carte de densité de population communale du département de l'Aisne._
 
-Le fichier de données est le fichier *popD02_2013.rds*.
-Le fond de carte est le fichier *ComD02.TAB*.
+Données disponibles sur <https://github.com/SSM-Agriculture/site-formations-R/wiki> dans le fichier `donnees_exercices.zip`
 
-```r
-#| code-fold: true
+- Le fichier de données est le fichier `popD02_2013.rds`.
+- Le fond de carte est le fichier `ComD02.TAB`.
 
-com <- read_sf("donnees_exercices/ComD02.TAB") |> 
-  clean_names()
 
-pop <- read_rds("donnees_exercices/popD02_2013.rds") |> 
-  as_tibble(.name_repair = make_clean_names)
+**TODO** _Calculer la jointure `com_pop` des deux jeux de données sur l'attribut `codgeo`, en calculant la densité de population et l'évolution de 2008 à 2013 en %._
 
-com_pop <- com |> 
-  select(-libgeo, -surf) |> 
-  left_join(pop, join_by(codgeo)) |> 
-  mutate(dpop_habkm2 = pop13 / surf,
-         evol_pop_pcent = (pop13 - pop08) / pop08 * 100)
+---
+
+```raw
+com_pop
+Simple feature collection with 816 features and 24 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 696994 ymin: 6859808 xmax: 790281 ymax: 6997000
+Projected CRS: RGF93 / Lambert-93
+# A tibble: 816 x 25
+   codgeo chef_lieu tncc  dct   dar   dau99 dau10 typo_au2010 deu99 duu99 duu10 z90   z10   epc      bv    int_reg reg   dep                    geometry libgeo
+ * <chr>  <chr>     <chr> <chr> <chr> <chr> <chr> <chr>       <chr> <chr> <chr> <chr> <chr> <chr>    <chr> <chr>   <chr> <chr>        <MULTIPOLYGON [m]> <chr> 
+ 1 02001  0         1     0203  022   248   998   300         1A    ""    ""    2232  2202  2402006~ 02173 NE      22    02    (((712717 6942795, 71199~ Abbéc~ 
+ 2 02002  0         1     0218  022   999   998   300         1A    ""    ""    2232  2205  2402004~ 02738 NE      22    02    (((728639 6953410, 72807~ Achery 
+ 3 02003  0         1     0217  024   117   127   112         1A    ""    ""    2207  2206  2402004~ 02722 NE      22    02    (((731200.1 6913598, 730~ Acy    
+ 4 02004  0         1     0211  022   000   000   400         9Z    ""    ""    2242  2204  2402004~ 02468 NE      22    02    (((768060 6955198, 76720~ Agnic~ 
+ 5 02005  0         1     0206  022   029   029   112         1A    ""    ""    2242  2204  2402005~ 51454 NE      22    02    (((769828 6920184, 76786~ Aguil~ 
+ 6 02006  0         1     0207  025   000   998   300         9Z    ""    ""    2241  2205  2402004~ 02095 NE      22    02    (((736934 6979095, 73622~ Aison~ 
+ 7 02007  0         1     0206  022   999   997   120         1A    ""    ""    2242  2204  2402005~ 51454 NE      22    02    (((760905 6931148, 75915~ Aizel~ 
+ 8 02008  0         1     0205  024   999   997   120         1A    ""    ""    2207  2206  2402005~ 02722 NE      22    02    (((736093 6924183, 73584~ Aizy-~ 
+ 9 02009  0         1     0212  023   074   074   112         1A    ""    ""    2231  2205  2000404~ 02691 NE      22    02    (((726606 6961580, 72541~ Alain~ 
+10 02010  0         1     0205  024   999   127   112         1A    ""    ""    2207  2206  2402005~ 02018 NE      22    02    (((733662 6928092, 73222~ Allem~ 
+# i 806 more rows
+# i 5 more variables: pop13 <dbl>, pop08 <dbl>, surf <dbl>, dpop_habkm2 <dbl>, evol_pop_pcent <dbl>
+# i Use `print(n = ...)` to see more rows
 ```
 
-## Densité de pop
+## Densité de population
 
-```r
-#| code-fold: true
+**TODO** _Représenter la densité de population en aplat (carte choroplète)._ 
 
-com_pop |> 
-  tm_shape() +
-  tm_polygons("dpop_habkm2",
-              style = "kmeans",
-              legend.reverse = TRUE, 
-              palette = "viridis")
-```
+**TODO** _Habiller la carte avec titre, rose des vents, légende, échelle et crédits._
 
-![](images/clipboard-3253355769.png){fig-align="center"}
+---
 
-## Évolution pop
+![](images/6-2-densite_population.png){fig-align="center"}
 
-Réaliser la carte d'évolution de la population communale du département de l'Aisne. On différenciera les évolutions positives et les évolutions négatives.
+## Évolution de population
 
-Le fichier de données et le fond de carte sont les mêmes que pour l'exercice précédent.
+**TODO** _Réaliser la carte d'évolution de la population communale du département de l'Aisne. On différenciera les évolutions positives et les évolutions négatives avec une [palette adaptée](https://colorbrewer2.org/#type=diverging&scheme=PRGn&n=5)_ (on pourra se passer de l'habillage).
 
-```r
-#| code-fold: true
+---
 
-com_pop |> 
-  tm_shape() +
-  tm_polygons("evol_pop_pcent")
-```
-
-![](images/clipboard-4210766889.png){fig-align="center"}
+![](images/6-3-evolution_population.png){fig-align="center"}
 
 ## Classes
 
-Reprendre la carte précédente en construisant des classes manuelles.
+**TODO** _Reprendre la carte précédente en construisant cinq classes manuelles entre -20 et +20 avec des points de rupture à -/+10, -/+5 et 0._
 
-```r
-#| code-fold: true
+---
 
-com_pop |> 
-  tm_shape() +
-  tm_polygons("evol_pop_pcent",
-              breaks = c(-20, -10, -5, 5, 10, 20),
-              midpoint = 0,
-              legend.reverse = TRUE)
-```
-
-![](images/clipboard-78065535.png){fig-align="center"}
-
-## Couleurs
-
-Reprendre la carte précédente en personnalisant les couleurs.
-
-```r
-#| code-fold: true
-
-com_pop |> 
-  tm_shape() +
-  tm_polygons("evol_pop_pcent",
-              style = "fixed",
-              breaks = c(-20, -10, -5, 5, 10, 20),
-              legend.reverse = TRUE, 
-              midpoint = 0,
-              palette = "PRGn")
-```
-
-![](images/clipboard-399650471.png){fig-align="center"}
-
-pour inverser la palette : `"-PRGn"`
-
-## Finalisation
-
-Habiller la carte construite au fil des exercices précédents.
-
-```r
-#| code-fold: true
-
-villes <- com_pop |> 
-  filter(pop13 > 10000)
-
-m <- com_pop |> 
-  tm_shape() +
-  tm_polygons("evol_pop_pcent",
-              title = "variation\nhabitants (%)",
-              style = "fixed",
-              breaks = c(-Inf, -20, -10, -5, 5, 10, 20, Inf),
-              legend.reverse = TRUE, 
-              midpoint = 0,
-              legend.format = list(text.separator = "à",
-                                   text.less.than = "moins de",
-                                   text.or.more = "ou plus"),
-              palette = "PRGn") +
-  tm_shape(villes) +
-  tm_symbols(size = 0.1, 
-             col = "black") +
-  tm_text("libgeo", 
-          size = 0.5,
-          just = -0.1, 
-          shadow = TRUE, ) +
-  tm_layout(main.title = "Évolution de la population - Aisne 2008-2013",
-            main.title.size = 0.9,
-            scale = .8,
-            legend.position = c(0.7, 0.15),
-            fontfamily = "Marianne") +
-  tm_credits(paste0("données INSEE RP 2020\nfond carto. d'après IGN\n", 
-                    Sys.Date()),
-             size = 0.5,
-             position = c(0.6, 0.05)) +
-  tm_scale_bar(color.dark = "grey40",
-               width = 0.2,
-               position = c(0.6, 0.01)) +
-  tm_compass(type = "rose",
-             position = c(0.9, 0.01),
-             size = 1.5) +
-  tm_logo("logo_masa.png", margin = 0,
-          position = c("left", "bottom"), 
-          height = 3)
-m
-```
-
-![](images/clipboard-2082243720.png){fig-align="center"}
+![](images/6-4-evolution_population_rupture.png){fig-align="center"}
 
 ## Exporter en PDF
 
-Exporter la carte au format PDF.
-
-```r
-#| code-fold: true
-
-tmap_save(m, "population_002_2008-2013.pdf", 
-          width = 20, height = 28.7, units = "cm",
-          dpi = 300,
-          device = cairo_pdf)
-```
+**TODO** _Habiller la carte précédente et l'exporter au format PDF au format 20 cm x 28.7 cm._

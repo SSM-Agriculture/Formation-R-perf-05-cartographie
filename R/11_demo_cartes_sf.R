@@ -8,18 +8,18 @@ tmap_mode("view")
 tmap_mode("plot")
 
 # original v3.0
-tm_shape(bio) +
-    tm_polygons(
-        "part_exp_bio",
-        style = "pretty",
-        n = 5,
-        title = "part en %",
-        palette = "BuGn",
-        border.col = "grey30",
-        lwd = 0.25,
-        legend.reverse = TRUE,
-        legend.format = list(text.separator = " - ")
-    )
+# tm_shape(bio) +
+#     tm_polygons(
+#         "part_exp_bio",
+#         style = "pretty",
+#         n = 5,
+#         title = "part en %",
+#         palette = "BuGn",
+#         border.col = "grey30",
+#         lwd = 0.25,
+#         legend.reverse = TRUE,
+#         legend.format = list(text.separator = " - ")
+#     )
 
 # reprise v4.0
 tm_shape(bio) +
