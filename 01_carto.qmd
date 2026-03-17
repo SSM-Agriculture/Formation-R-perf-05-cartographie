@@ -110,7 +110,7 @@ Affichage minimaliste par défaut avec fonction [`sf::plot()`](https://r-spatial
 
 ```r
 tm_shape(bio) +
-  tm_polygons("part_exp_bio")
+    tm_polygons("part_exp_bio")
 ```
 
 ![](images/2-4-cas_part_expl_bio-tm_polygons.png)
@@ -142,7 +142,6 @@ tm_shape(bio) +
     )
 ```
 
-<!-- ![](images/clipboard-1074117001.png){fig-align="center"} -->
 
 ---
 
@@ -171,8 +170,6 @@ tm_shape(bio) +
 ```
 
 ---
-
-<!-- ![](images/clipboard-223446850.png){fig-align="center"} -->
 
 ![](images/2-5-cas_part_expl_bio-symb-proportionnels.png){fig-align="center"}
 
@@ -203,8 +200,6 @@ tm_shape(bio) +
 ```
 
 ---
-
-<!-- ![](images/clipboard-1095066075.png){fig-align="center"} -->
 
 ![](images/2-6-cas_part_expl_bio-symb-et_aplat.png){fig-align="center"}
 
@@ -240,8 +235,6 @@ tm_shape(bio) +
 
 ---
 
-<!-- ![](images/clipboard-1182804328.png){fig-align="center"} -->
-
 ![](images/2-7-cas_part_expl_bio-variante_symbole.png){fig-align="center"}
 
 ---
@@ -252,12 +245,10 @@ tmap_mode("view")
 
 ![](images/2-7-cas_part_expl_bio-variante_symbole_interactif.png){fig-align="center"} 
 
-<!-- ![](images/clipboard-1991139768.png){fig-align="center"} -->
 
 ## Couleurs et palettes
 
 Les couleurs sont à préciser dans l'argument `values` de la fonction `tm_scale()` des arguments `.scale` comme `fill.scale`.
-<!-- Il faut _autant de couleurs qu'il y a de classes_. -->
 
 - Le site <https://r-charts.com/colors/> présente les couleurs de base en R.
 - Le package [`{cols4all}`](https://cols4all.github.io/cols4all-R/) (par l'auteur de `{tmap}`) propose une fonction `cols4all::c4a_gui()` qui permet de visualiser des palettes de couleurs, en simulant les déficiences visuelles.
@@ -270,7 +261,6 @@ colorspace::specplot(pal_vir)
 ```
 
 ![](images/2-8-viridis_specplot.png){fig-align="center"}
-<!-- ![](images/clipboard-1060732439.png){fig-align="center"} -->
 
 ------------------------------------------------------------------------
 
@@ -280,7 +270,6 @@ colorspace::specplot(pal_div)
 ```
 
 ![](images/2-8-prgn_specplot.png){fig-align="center"}
-<!-- ![](images/clipboard-3779356658.png){fig-align="center"} -->
 
 ------------------------------------------------------------------------
 
@@ -331,8 +320,6 @@ c4a_overview()
 21        wes                   Palettes from Wes Anderson movies  23   0   1   0    0    0    0    0
 ```
 
-<!-- ![](images/clipboard-3178298197.png) -->
-
 ------------------------------------------------------------------------
 
 ```r
@@ -356,131 +343,113 @@ c4a_scores(series = "brewer", type = "div") |> as_tibble()
 #   contrastWT <lgl>, contrastBK <lgl>, float <lgl>, nameable <lgl>
 ```
 
-<!-- ![](images/clipboard-3609586085.png){fig-align="center"} -->
+# Discrétisation des données en classes
 
-# Classes
+## Construction automatique des classes
 
-## Construction des classes → méthode automatique
+L'argument `style` de la fonction `tm_scale_intervals()` utilisée dans les arguments `.scale` des objets cartographiques créés avec `tm_polygons()` permet de définir **la méthode (automatique) de création des classes**, l'argument `n` reçoit _le nombre de classes à construire_.
 
-L'argument `style` de la fonction `tm_polygons()` peut recevoir les valeurs suivantes : `"cat"`, `"fixed"`, `"sd"`, `"equal"`, `"pretty"`, `"quantile"`, `"kmeans"`, `"hclust"`, `"bclust"`, `"fisher"`...
-L'argument `n` reçoit le nombre de classes à construire.
+Les arguments passés à [`classInt::classIntervals()`](https://r-spatial.github.io/classInt/reference/classIntervals.html) qui fait le calcul.
 
-- `"sd"` : *n* classes construites à partir de la moyenne et dont les amplitudes valent un écart-type (sauf parfois les classes extrêmes)
-- `"equal"` : *n* classes d'amplitudes égales
-- `"quantile"` : *n* classes de même effectif
-- `"fisher"` ou `"jenks"` : n classes construites avec une méthode qui minimise les variances intra-classes et maximise les variances inter-classes
+---
 
-------------------------------------------------------------------------
+Les méthodes disponibles sont `"cat"`, `"fixed"`, `"sd"`, `"equal"`, `"pretty"`, `"quantile"`, `"kmeans"`, `"hclust"`, `"bclust"`, `"fisher"`, `"jenks"`, `"dpih"`, `"headtails"` et `"log10_pretty"`.
+Les principales sont :
 
-```r
-#| code-fold: true
-#| results: hide
-#| output: false
+- `"sd"` : classes construites à partir de la moyenne et dont les amplitudes valent un écart-type (_standard deviation_),
+- `"equal"` : classes d'amplitudes égales,
+- `"quantile"` : classes de même effectif,
+- `"fisher"` ou `"jenks"` : classes construites avec une méthode qui _minimise les variances intra-classes_ et _maximise les variances inter-classes_,
+- `"headtails"` : classes pour les distributions avec de nombreuses valeurs hautes,
+- ...
 
-tmap_mode("plot")
+Voir fichier [12_demo_classes.R](R/12_demo_classes.R) pour la génération des illustrations après.
+**Toutes ne sont pas adaptées au cas**.
 
-library(classInt)
-library(patchwork)
+---
 
-n_classes <- 5
-methodes <- c("sd", "equal", "pretty", "quantile", "kmeans", "hclust", "bclust", 
-              "fisher", "jenks", "dpih", "headtails")
+![](images/3-1-classification-sd.png){fig-align="center"}
 
-generer <- function(methode) {
-  cesures <- classIntervals(bio$part_exp_bio, style = methode, n = n_classes)
-  palette <- viridisLite::viridis(length(cesures$brks) - 1)
-  
-  carte <- tm_shape(bio) +
-    tm_polygons("part_exp_bio", 
-                style = "fixed",
-                breaks = cesures$brks,
-                title = "%",
-                palette = palette,
-                border.col = "grey30",
-                lwd = 0.25,
-                legend.reverse = TRUE, 
-                legend.format = list(text.separator = " - ")) +
-    tm_layout(frame = FALSE, 
-              bg.color = NA, 
-              legend.outside = TRUE,
-              legend.outside.position = "bottom")
+---
 
-  graphique <- density(bio$part_exp_bio)[c("x", "y")] |> 
-    as_tibble() |> 
-    mutate(intervalle = findInterval(x, cesures$brks)) |> 
-    filter(between(intervalle, 1, length(cesures$brks) - 1)) |> 
-    mutate(couleur = palette[intervalle]) |> 
-    ggplot(aes(x, y)) +
-    geom_area(aes(fill = couleur)) +
-    geom_line() +
-    scale_fill_identity() +
-    labs(title = methode,
-         x = "part des exploitations en bio (%)", 
-         y = "densité") +
-    theme_minimal()
-  out <- tmap_grob(carte)
-  return(graphique + out)
-}
+![](images/3-1-classification-equal.png){fig-align="center"}
 
-exemples_classes <- methodes |> 
-   map(generer) 
-```
+---
 
-![](images/clipboard-511509773.png){fig-align="center"}
+![](images/3-1-classification-pretty.png){fig-align="center"}
 
-------------------------------------------------------------------------
+---
 
-![](images/clipboard-282850556.png){fig-align="center"}
+![](images/3-1-classification-quantile.png){fig-align="center"}
 
-![](images/clipboard-129827667.png){fig-align="center"}
+---
 
-------------------------------------------------------------------------
+![](images/3-1-classification-kmeans.png){fig-align="center"}
 
-![](images/clipboard-2893698102.png){fig-align="center"}
+---
 
-![](images/clipboard-1200282682.png){fig-align="center"}
+![](images/3-1-classification-hclust.png){fig-align="center"}
 
-------------------------------------------------------------------------
+---
 
-![](images/clipboard-1087668820.png){fig-align="center"}
+![](images/3-1-classification-bclust.png){fig-align="center"}
 
-![](images/clipboard-4030245030.png){fig-align="center"}
+---
 
-------------------------------------------------------------------------
+![](images/3-1-classification-fisher.png){fig-align="center"}
 
-![](images/clipboard-3737099555.png){fig-align="center"}
 
-![](images/clipboard-114083837.png){fig-align="center"}
+---
 
-------------------------------------------------------------------------
+![](images/3-1-classification-jenks.png){fig-align="center"}
 
-![](images/clipboard-1771683977.png){fig-align="center"}
+---
 
-![](images/clipboard-4231803302.png){fig-align="center"}
+![](images/3-1-classification-dpih.png){fig-align="center"}
 
-------------------------------------------------------------------------
+---
+
+![](images/3-1-classification-headtails.png){fig-align="center"}
+
+---
+
+## Construction manuelle des classes
+
+Il est possible de renseigner _manuellement_ ses propres classes dans l'argument `breaks` de la fonction `tm_scale_intervals(style = "fixed")`.
+Pour renseigner un découpage en *n* classes, l'argument `breaks` doit contenir **un vecteur de taille n+1** : `c(min, borne₁, borne₂, … , borneₙ₋₁, max)`.
+
+Exemple sur _le % d'exploitation en AB_ : la méthode `"quantile"` à 5 classes donne les ruptures comme suit, qu'on peut  arrondir et passer à `breaks`.
+
+---
 
 ```r
-#| echo: false
-#| ouput: false
-#| results: asis
+cesures <- classIntervals(bio$part_exp_bio, style = "quantile", n = 5)
+cesures
+# style: quantile
+#   one of 3,183,545 possible partitions of this variable into 5 classes
+# [4.02,7.52) [7.52,9.97) [9.97,13.38)  [13.38,17.18)  [17.18,33.33]
+#         19          19           19             19             20 
 
-# exemples_classes |> 
-#   map(print)
+tm_shape(bio) +
+    tm_polygons(
+        ...
+        fill.scale = tm_scale_intervals(
+            style = "fixed",
+            breaks = round(cesures$brks, 1),
+            values = c4a("viridis", n = 5),
+        ),
+        ...
+    )
 
-for (i in seq_along(exemples_classes)) {
-  print(exemples_classes[[i]])
-  cat("\n\n")
-}
+classIntervals(bio$part_exp_bio, style = "jenks", n = 5)
+# style: jenks
+#   one of 3,183,545 possible partitions of this variable into 5 classes
+# [4.02,7.17] (7.17,10.10] (10.10,14.94] (14.94,20.55] (20.55,33.33]
+#         18            24           26            15            13 
 ```
 
-------------------------------------------------------------------------
 
-## Construction des classes → méthode manuelle
-
-Il est possible de renseigner ses propres classes dans l'argument `breaks` de la fonction `tm_polygons()`. Pour renseigner un découpage en *n* classes, l'argument doit contenir un vecteur de taille *n+1* : `c(min, borne₁, borne₂, … , borneₙ₋₁, max)`.
-
-Exemple - La méthode quantile à 5 classes donne les ruptures suivantes : {2.085026 ; 4.880998 ; 6.820057 ; 9.213732 ; 13.183048 ; 50.000000}. Pour avoir des valeurs arrondies , je peux renseigner `breaks = c(2, 5, 7, 9, 13, 50)` dans la fonction.
+# Autres fonctionnalités
 
 ## Habillage de la carte
 
@@ -534,9 +503,7 @@ tmap_save(m, "pcent_bio_fr.png",
 
 ![](images/clipboard-79388324.png){fig-align="center"}
 
-# Facettes
-
-## Exemple Facettes
+## Facettes
 
 ::::: columns
 ::: {.column width="45%"}
@@ -565,9 +532,7 @@ tm_layout("Exploitations\nen conduite bio\npar région")
 :::
 :::::
 
-# Cartogramme
-
-## Exemple Cartogramme
+## Cartogramme
 
 ::::: columns
 ::: {.column width="45%"}
@@ -593,9 +558,8 @@ bio |>
 :::
 :::::
 
-# Grilles
 
-## Exemple Grilles
+## Grilles
 
 ::::: columns
 ::: {.column width="45%"}
@@ -636,27 +600,18 @@ bio |>
 ## Références
 
 - Crameri, Fabio, Grace E. Shephard, et Philip J. Heron. 2020. « The Misuse of Colour in Science Communication ». *Nature Communications 11* (1): 5444. <https://doi.org/10.1038/s41467-020-19160-7>.
-
 - Engelaere-Lefebvre, Juliette, Maël Theulière, et Jean-Daniel Lomenède. 2023. « Analyses spatiales avec R ». *Formations R aux MTES & MCTRCT*. [https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/.)
-
 - Harrower, Mark, et Cynthia A. Brewer. 2003. « ColorBrewer. Org: An Online Tool for Selecting Colour Schemes for Maps ». *The Cartographic Journal 40* (1): 27‑37. <https://doi.org/10.1179/000870403235002042>.
-
 - Loonis, Vincent, et Marie-Pierre de Bellefon. 2018. Manuel d’analyse spatiale. Théorie et mise en œuvre pratique avec R. Insee Méthodes 131. Montrouge: INSEE - Eurostat. <https://www.insee.fr/fr/information/3635442>.
-
 - Lovelace, Robin, Jakub Nowosad, et Jannes Muenchow. 2023. Geocomputation with R. <https://r.geocompx.org/>.
-
 - Pebesma, Edzer, et Roger Bivand. 2023. Spatial Data Science: With Applications in R. New York: Chapman and Hall/CRC. <https://doi.org/10.1201/9780429459016>.
-
 - Rowe, Francisco, et Dani Arribas-Bel. 2022. Spatial Modelling for Data Scientists. University of Liverpool. <https://gdsl-ul.github.io/san/>.
 
 ------------------------------------------------------------------------
 
 - Theulière, Maël. 2019. « Les données spatiales avec R ». <https://maeltheuliere.github.io/rspatial/index.html>.
-
 - Wimberly, Michael C. 2023. Geographic Data Science with R: Visualizing and Analyzing Environmental Change. <https://bookdown.org/mcwimberly/gdswr-book/>.
-
 - Zeileis, Achim, Kurt Hornik, et Paul Murrell. 2009. « Escaping RGBland: Selecting Colors for Statistical Graphics ». Research {{Report Series}} 61. Vienna: Department of Statistics and Mathematics, WU Vienna University of Economics and Business. <http://www.sciencedirect.com/science/article/pii/S0167947308005549>.
-
 - Zeileis, Achim, et Paul Murrell. 2023. « Coloring in R’s Blind Spot ». The R Journal 15 (3): 240‑56. <https://doi.org/10.32614/RJ-2023-071>.
 
 # Exercices
