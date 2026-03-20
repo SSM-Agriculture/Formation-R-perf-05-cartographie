@@ -1,9 +1,41 @@
 # Introduction
 
-## Cartographie thématique
+## Cartographie 
 
-Ici, quelques rappels à l'oral.
+Voir les fiches _Principaux types de cartes_, _Cartographie_, et _Sémilogie Graphique_ et sur <https://sigea.educagri.fr/theorie/fiches-synthetiques>.
 
+
+### Topographique ou thématique
+
+- la carte **topographique** (ou générale) : représente la nature du terrain (élévation et reliefs), les entités naturelles et anthropiques, e.g., la "Carte IGN".
+- la carte **thématique**  : représente un sujet particulier pour qualifier les objets et les phénomènes à partir de données (généralement statistiques). _Vous êtes ici !_
+
+---
+
+![Carte figurative de l'instruction populaire de la France est une carte choroplèthe de la France conçue en 1826 par l'ingénieur, mathématicien et homme politique français Charles Dupin. Elle est considérée comme une des toutes premières cartes thématiques jamais réalisées. [Wikipédia](https://fr.wikipedia.org/wiki/Carte_figurative_de_l%27instruction_populaire_de_la_France)](images/Carte_figurative_de_l'instruction_populaire_de_la_France.jpg)
+
+---
+
+### Ceci n'est **pas** une carte
+
+Une carte **doit** présenter : un titre, une légende, une échelle, une flèche nord, des sources, un auteur... et un _corps_.
+
+![](images/2-2-cas_part_expl_bio-plot.png){fig-align="center"}
+
+---
+
+### Sémiologie graphique : la grammaire visuelle
+
+_La sémiologie graphique est, de façon générale, l'ensemble des règles qui régissent la construction d'un système de signes ou langage permettant la traduction graphique d'une information._
+_Depuis la parution de la Sémiologie graphique de Jacques Bertin en 1967, elle désigne surtout un ensemble standardisé des règles et de pratiques inhérentes à la représentation cartographique au-delà des travaux réalisés par Bertin._
+
+Extrait de [Wikipédia](https://fr.wikipedia.org/wiki/S%C3%A9miologie_graphique).
+
+#### Exemple
+
+S'il ne faut retenir _qu'une seule règle_ : **pas de stocks en aplat !** (voir <https://neocarto.hypotheses.org/5717>).
+
+ 
 ## Les packages utilisés dans ce module
 
 - `{sf}` (4.4) : fonctions sur les objets spatiaux (import, traitement, export...) ([documentation](https://r-spatial.github.io/sf/))
@@ -43,13 +75,13 @@ Changements **substantiels** d'interface depuis la v4.0, voir [Releases](https:/
 
 ## Objectif
 
-_Réaliser une carte départementale métropolitaine des parts d'exploitations ayant au moins une parcelle conduite en agriculture biologique et du nombre d'exploitations (source : RA 2020)_.
+**TODO** _Réaliser une carte départementale métropolitaine du nombre et des parts d'exploitations ayant au moins une parcelle conduite en agriculture biologique (source : RA 2020)_.
 
 ## Import d'un fond de carte
 
 ### Ouverture du fond de carte
 
-La fonction `read_sf()` permet d’ouvrir des fonds cartographiques au format *.TAB* (MapInfo), *.shp* (Shapefile), *.gpkg* ([GeoPackage](https://www.geopackage.org/)) et bien d'autres (bases de données [PostGIS](https://postgis.net/)).
+La fonction `read_sf()` permet d’ouvrir des données cartographiques au format *.TAB* (MapInfo), *.shp* (Shapefile), *.gpkg* ([GeoPackage](https://www.geopackage.org/)), des bases de données [PostGIS](https://postgis.net/) ou [DuckDB](https://duckdb.org/).
 
 ```r
 gpkg <- "~/CERISE/03-Espace-de-Diffusion/000_Referentiels/0040_Geo/IGN/adminexpress/adminexpress_cog_simpl_000_2023.gpkg"
@@ -88,11 +120,25 @@ L'objet `dep` combine des polygones (le contour des départements, attribut `geo
 
 Ce `data.frame` se comporte comme n'importe quel autre (même utilisation des fonctions `str()`, `names()`, les fonctions de `{dplyr}`...).
 
-```r
-head(dep)
+```raw
+r$> head(dep)
+Simple feature collection with 6 features and 4 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XY
+Bounding box:  xmin: 394752.2 ymin: 6686771 xmax: 987205.3 ymax: 7030719
+Projected CRS: RGF93 v1 / Lambert-93
+# A tibble: 6 x 5
+  insee_dep id                       nom         insee_reg                             geom
+  <chr>     <chr>                    <chr>       <chr>                   <MULTIPOLYGON [m]> 
+1 70        DEPARTEM_FXX_00000000071 Haute-Saône 27        (((972248.1 6762255, 973545.8 6~ 
+2 89        DEPARTEM_FXX_00000000090 Yonne       27        (((707373.3 6805723, 707657.4 6~ 
+3 60        DEPARTEM_FXX_00000000061 Oise        32        (((699240.6 6902196, 699168.9 6~ 
+4 80        DEPARTEM_FXX_00000000081 Somme       32        (((660347.7 7002280, 660606.9 7~ 
+5 14        DEPARTEM_FXX_00000000016 Calvados    28        (((507839.1 6886562, 508318.9 6~ 
+6 27        DEPARTEM_FXX_00000000028 Eure        28        (((509647.6 6912733, 508374.9 6~ 
 ```
 
-![](images/clipboard-506331518.png){fig-align="center"}
+---
 
 `plot()` permet d'afficher le fond spatial pour toutes les variables dans la fenêtre graphique ([documentation](https://r-spatial.github.io/sf/reference/plot.html)).
 
@@ -100,7 +146,7 @@ head(dep)
 plot(dep)
 ```
 
-![](images/clipboard-205340217.png){fig-align="center"}
+![](images/2-2-cas_part_expl_bio-plot_x4.png){fig-align="center"}
 
 ------------------------------------------------------------------------
 
@@ -121,7 +167,14 @@ bio <- dep |>
   left_join(exp_dep, by = c("insee_dep" = "siege_dep"))
 ```
 
-![](images/clipboard-3875996549.png){fig-align="center"}
+|siege_dep | n_exp| n_exp_bio| part_exp_bio|
+|:---------|-----:|---------:|------------:|
+|01        |  3017|       301|     9.976798|
+|02        |  4472|       221|     4.941860|
+|03        |  4356|       328|     7.529844|
+|04        |  2064|       520|    25.193798|
+|05        |  1646|       367|    22.296476|
+|06        |  1192|       235|    19.714765|
 
 ------------------------------------------------------------------------
 
@@ -643,6 +696,7 @@ bio_metropole |>
 
 Pour aller plus loin
 
+- [Guide de sémiologie cartographique - INSEE](https://www.insee.fr/fr/statistiques/3640429)
 - GUR : [Cartographie avec R](https://ged.national.agri/gedsi/nxdoc/default/88702758-b87d-4eac-bc4d-218fcfdbf238/view_documents)
 - La formation MTES [Analyses spatiales avec R](https://mtes-mct.github.io/parcours_r_module_analyse_spatiale/)
 

@@ -1,4 +1,9 @@
-tm_shape(bio) + tm_polygons(fill = "part_exp_bio")
+m_exp <- tm_shape(bio) + tm_polygons(fill = "part_exp_bio")
+
+m_exp |>
+    tmap_save("images/2-4-cas_part_expl_bio-tm_polygons.png")
+
+
 qtm(bio, fill = "part_exp_bio")
 
 
