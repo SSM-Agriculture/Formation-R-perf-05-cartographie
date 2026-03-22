@@ -25,6 +25,8 @@ editor:
     wrap: 72
 ---
 
+# Avant-propos{.unnumbered}
+
 ## Avant-propos
 
 Ce diaporama de formation a été rédigé dans le but d'être le support visuel des formations dispensées au [SSM Agriculture](https://agreste.agriculture.gouv.fr/).
