@@ -12,15 +12,15 @@ Voir les fiches _Principaux types de cartes_, _Cartographie_, et _Sémilogie Gra
 
 ---
 
-![Carte figurative de l'instruction populaire de la France est une carte choroplèthe de la France conçue en 1826 par l'ingénieur, mathématicien et homme politique français Charles Dupin. Elle est considérée comme une des toutes premières cartes thématiques jamais réalisées. [Wikipédia](https://fr.wikipedia.org/wiki/Carte_figurative_de_l%27instruction_populaire_de_la_France)](images/Carte_figurative_de_l'instruction_populaire_de_la_France.jpg)
+![Carte figurative de l'instruction populaire de la France est une carte choroplèthe de la France conçue en 1826 par l'ingénieur, mathématicien et homme politique français Charles Dupin. Elle est considérée comme une des toutes premières cartes thématiques jamais réalisées. [Wikipédia](https://fr.wikipedia.org/wiki/Carte_figurative_de_l%27instruction_populaire_de_la_France)](images/wikipedia-carte_choroplethe_dupin.jpg)
 
 ---
 
-### Ceci n'est **pas** une carte
+### Ceci n'est **pas** une carte !
+
+![Ceci n'est **pas** une carte !](images/2-2-cas_part_expl_bio-plot.png){fig-align="center"}
 
 Une carte **doit** présenter : un titre, une légende, une échelle, une flèche nord, des sources, un auteur... et un _corps_.
-
-![](images/2-2-cas_part_expl_bio-plot.png){fig-align="center"}
 
 ---
 
@@ -35,6 +35,11 @@ Extrait de [Wikipédia](https://fr.wikipedia.org/wiki/S%C3%A9miologie_graphique)
 
 S'il ne faut retenir _qu'une seule règle_ : **pas de stocks en aplat !** (voir <https://neocarto.hypotheses.org/5717>).
 
+---
+
+#### Variables graphiques {tmap}
+
+![Principales variables graphiques et leur rendu dans {tmap}, issu de Voir Spatial [Data Visualization with tmap, Chapter 7](https://tmap.geocompx.org/layers)](images/tmap-geocompx-fig-visual-variables-1.png)
  
 ## Les packages utilisés dans ce module
 
@@ -77,6 +82,40 @@ Changements **substantiels** d'interface depuis la v4.0, voir [Releases](https:/
 
 **TODO** _Réaliser une carte départementale métropolitaine du nombre et des parts d'exploitations ayant au moins une parcelle conduite en agriculture biologique (source : RA 2020)_.
 
+## Principaux objets `{tmap}`
+
+### Objets de couches
+
+Voir Spatial [Data Visualization with tmap, Chapter 6](https://tmap.geocompx.org/layers)
+
+|Function      |Element                     |Geometry                    |
+|:-------------|:---------------------------|:---------------------------|
+|`tm_polygons()` |polygons (borders and fill) |polygons                    |
+|`tm_symbols()`  |symbols                     |points, polygons, and lines |
+|`tm_lines()`    |lines                       |lines                       |
+|`tm_text()`     |text                        |points, polygons, and lines |
+|`tm_raster()`   |raster                      |raster                      |
+|`tm_basemap()`  |tile                        |                            |
+|`tm_tiles()`    |tile                        |                            |
+
+---
+
+### Objets de couches dérivés
+
+|Function                |Element                     |Geometry                    |
+|:-----------------------|:---------------------------|:---------------------------|
+|`tm_borders()`            |polygons (borders)          |polygons                    |
+|`tm_fill()`               |polygons (fill)             |polygons                    |
+|`tm_bubbles()`            |bubbles                     |points, polygons, and lines |
+|`tm_dots()`               |dots                        |points, polygons, and lines |
+|`tm_markers()`            |marker symbols              |points, polygons, and lines |
+|`tm_square()`             |squares                     |points, polygons, and lines |
+|`tm_labels()`             |text labels                 |points, polygons, and lines |
+|`tm_labels_highlighted()` |text labels with background |points, polygons, and lines |
+|`tm_iso()`                |lines with text labels      |lines                       |
+|`tm_rgb()`/`tm_rgba()`    |raster (RGB image)          |raster                      |
+
+
 ## Import d'un fond de carte
 
 ### Ouverture du fond de carte
@@ -112,11 +151,9 @@ Available layers:
 9            epci                   1266      4   WGS 84
 ```
 
+L'objet `dep` combine des _géométries_ (ici les polygones des départements, attribut `geom`) et des _données atrtibutaires_ (attributs `insee_dep`, `nom`, `insee_reg`...) dans un objet de type `data.frame` ou `tibble`.
 
-
-L'objet `dep` combine des polygones (le contour des départements, attribut `geom`) et des données dans un objet de type `data.frame` ou `tibble`.
-
------------------------------------------------------------------
+---
 
 Ce `data.frame` se comporte comme n'importe quel autre (même utilisation des fonctions `str()`, `names()`, les fonctions de `{dplyr}`...).
 
@@ -140,7 +177,7 @@ Projected CRS: RGF93 v1 / Lambert-93
 
 ---
 
-`plot()` permet d'afficher le fond spatial pour toutes les variables dans la fenêtre graphique ([documentation](https://r-spatial.github.io/sf/reference/plot.html)).
+`plot()` permet d'afficher le fond pour _toutes_ les variables dans la fenêtre graphique ([documentation](https://r-spatial.github.io/sf/reference/plot.html)).
 
 ```r
 plot(dep)
@@ -279,7 +316,7 @@ tm_shape(bio) +
 
 ![](images/2-6-cas_part_expl_bio-symb-et_aplat.png){fig-align="center"}
 
-## Variante
+## Représentations alternatives
 
 Une alternative consiste à faire varier la taille + la couleur du cercle : les couleurs des classes de la variable représentée en aplats sont placées dans les ronds proportionnels.
 
