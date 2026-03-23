@@ -4,6 +4,8 @@ library(sf)
 library(tmap)
 library(knitr)
 library(janitor)
+library(RColorBrewer)
+library(cols4all)
 library(ragg)         # remplace grDevices (défaut) <https://ragg.r-lib.org/>
 options(OutDec = ".")
 
@@ -25,12 +27,11 @@ dep <- read_sf(gpkg, layer = "departement") |>
     st_transform("EPSG:2154")
 
 head(dep)
-
 plot(dep)
 
-png("images/2-2-cas_part_expl_bio-plot_x4.png")
+ragg::agg_png("images/2-2-cas_part_expl_bio-plot_x4.png")
 plot(dep)
-dev.off()
+invisible(dev.off())
 
 expl_ra <- fs::path_home_r(
     "CERISE",
@@ -57,6 +58,6 @@ bio <- dep |>
 
 plot(bio |> select(geom, part_exp_bio))
 
-png("images/2-2-cas_part_expl_bio-plot.png")
+ragg::agg_png("images/2-2-cas_part_expl_bio-plot.png")
 plot(bio |> select(geom, part_exp_bio))
-dev.off()
+invisible(dev.off())

@@ -1,5 +1,9 @@
-tmap_mode("plot")
+library(cartogram)
+library(tilemaps)
 
+## Habillage de carte ---------------------------------------------------------
+
+tmap_mode("plot")
 m_base <- tm_shape(bio) +
     tm_polygons(
         "part_exp_bio",
@@ -56,15 +60,16 @@ tmap_save(
     units = "cm",
     asp = 1.618,
     dpi = 300,
-    device = agg_png
+    device = ragg::agg_png
 )
 
 
 # tmap_mode("view")
 # tmap_save(m, "pcent_bio_fr.html")
 
-tmap_mode("plot")
+## Facettes -------------------------------------------------------------------
 
+tmap_mode("plot")
 m_facet <- tm_shape(bio) +
     tm_polygons(
         "part_exp_bio",
@@ -85,11 +90,11 @@ m_facet
 
 tmap_save(
     m_facet,
-    "images/4-2-facettes_regions.png"
+    "images/4-2-facettes_regions.png",
+    device = ragg::agg_png
 )
 
-
-library(cartogram)
+## Cartogramme ----------------------------------------------------------------
 
 m_cartogram <- bio |>
     cartogram_dorling("n_exp") |>
@@ -116,11 +121,13 @@ m_cartogram
 
 tmap_save(
     m_cartogram,
-    "images/4-3-cartogramme_dorling.png"
+    "images/4-3-cartogramme_dorling.png",
+    # width = 2048 * 16 / 9,
+    # height = 2048,
+    device = ragg::agg_png
 )
 
-
-library(tilemaps)
+## Pavage hexagonal ---------------------------------------------------------
 
 bio_metropole <- bio |>
     filter(insee_reg != "94") |>
@@ -161,5 +168,6 @@ m_bio_tiles <- bio_metropole |>
 
 tmap_save(
     m_bio_tiles,
-    "images/4-4-grilles_hexagonales.png"
+    "images/4-4-grilles_hexagonales.png",
+    device = ragg::agg_png
 )

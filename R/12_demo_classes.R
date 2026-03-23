@@ -1,5 +1,4 @@
 library(tmap)
-library(cols4all)
 library(ggplot2)
 library(glue)
 library(classInt)
@@ -65,7 +64,11 @@ generer <- function(methode) {
         theme_minimal()
 
     composition <- graphique + out
-    ggsave(glue("images/3-1-classification-{methode}.png"), plot = composition)
+    ggsave(
+        glue("images/3-1-classification-{methode}.png"),
+        plot = composition,
+        device = ragg::agg_png
+    )
     composition
 }
 

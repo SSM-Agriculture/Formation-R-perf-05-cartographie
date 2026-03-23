@@ -1,9 +1,9 @@
 library(here)
+library(tidyverse)
 library(sf)
 library(tmap)
 library(cols4all)
 library(janitor)
-library(tidyverse)
 
 com <- read_sf(here("data", "ComD02.TAB")) |>
     clean_names()
@@ -58,11 +58,12 @@ question_2 <-
         size = 2,
         position = tm_pos_in("right", "top")
     )
-
+question_2
 
 tmap_save(
     question_2,
-    "images/6-2-densite_population.png"
+    "images/6-2-densite_population.png",
+    device = ragg::agg_png
 )
 
 question_3 <-
@@ -84,7 +85,8 @@ question_3
 
 tmap_save(
     question_3,
-    "images/6-3-evolution_population.png"
+    "images/6-3-evolution_population.png",
+    device = ragg::agg_png
 )
 
 
@@ -114,7 +116,8 @@ question_4
 
 tmap_save(
     question_4,
-    "images/6-4-evolution_population_rupture.png"
+    "images/6-4-evolution_population_rupture.png",
+    device = ragg::agg_png
 )
 
 
