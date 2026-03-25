@@ -54,11 +54,11 @@ m_exp_2 |>
 
 ## 2.5 Carte à symboles proportionnels
 tmap_mode("plot")
-m_nexp <- tm_shape(bio) +
+m_nexp_bio <- tm_shape(bio) +
     tm_borders(col = "grey30", lwd = 0.25) +
     tm_symbols(
         fill = "darkolivegreen4",
-        size = "n_exp",
+        size = "n_exp_bio",
         size.scale = tm_scale(values.scale = 1.25),
         size.legend = tm_legend(
             title = "Nombre d'exploitations en AB",
@@ -66,9 +66,9 @@ m_nexp <- tm_shape(bio) +
             position = c("left", "top")
         )
     )
-m_nexp
+m_nexp_bio
 
-m_nexp |>
+m_nexp_bio |>
     tmap_save(
         filename = "images/2-5-cas_part_expl_bio-symb-proportionnels.png",
         device = ragg::agg_png,
@@ -78,7 +78,7 @@ m_nexp |>
 
 ## 2.6 Carte choroplèthe + symboles proportionnels
 
-m_exp_nexp <- tm_shape(bio) +
+m_exp_nexp_bio <- tm_shape(bio) +
     tm_polygons(
         "part_exp_bio",
         col = "grey60",
@@ -92,7 +92,7 @@ m_exp_nexp <- tm_shape(bio) +
     ) +
     tm_symbols(
         fill = "darkolivegreen4",
-        size = "n_exp",
+        size = "n_exp_bio",
         size.scale = tm_scale(values.scale = 1.5),
         size.legend = tm_legend(
             title = "Nombre d'exploitations en AB",
@@ -106,9 +106,9 @@ m_exp_nexp <- tm_shape(bio) +
         text = "Recensement Agricole 2020 - Agreste",
         position = c("left", "bottom")
     )
-m_exp_nexp
+m_exp_nexp_bio
 
-m_exp_nexp |>
+m_exp_nexp_bio |>
     tmap_save(
         filename = "images/2-6-cas_part_expl_bio-symb-et_aplat.png",
         device = ragg::agg_png,
@@ -135,7 +135,7 @@ m_variante <- tm_shape(bio) +
             reverse = TRUE,
             position = tm_pos_in("left", "bottom"),
         ),
-        size = "n_exp",
+        size = "n_exp_bio",
         size.scale = tm_scale(
             values.scale = 1.5
         ),
