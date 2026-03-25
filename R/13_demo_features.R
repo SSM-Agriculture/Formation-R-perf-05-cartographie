@@ -6,7 +6,7 @@ library(tilemaps)
 tmap_mode("plot")
 m_base <- tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey60",
         fill.scale = tm_scale_intervals(
             values = "brewer.bu_gn",
@@ -72,7 +72,7 @@ tmap_save(
 tmap_mode("plot")
 m_facet <- tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey60",
         fill.scale = tm_scale_intervals(
             values = "brewer.bu_gn",
@@ -100,7 +100,7 @@ m_cartogram <- bio |>
     cartogram_dorling("n_exp") |>
     tm_shape() +
     tm_polygons(
-        "n_exp",
+        fill = "n_exp",
         fill.scale = tm_scale_intervals(
             values = "brewer.bu_gn",
             style = "quantile",
@@ -157,7 +157,7 @@ m_bio_tiles <- bio_metropole |>
     st_set_geometry("tile_map") |>
     tm_shape() +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         fill.legend = tm_legend(
             title = "Part d'expl. en AB",
             reverse = TRUE

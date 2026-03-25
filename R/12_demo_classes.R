@@ -26,7 +26,7 @@ generer <- function(methode) {
 
     carte <- tm_shape(bio) +
         tm_polygons(
-            "part_exp_bio",
+            fill = "part_exp_bio",
             col = "grey30",
             fill.scale = tm_scale_intervals(
                 style = "fixed",
@@ -84,7 +84,7 @@ cesures
 
 tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey30",
         fill.scale = tm_scale_intervals(
             style = "fixed",

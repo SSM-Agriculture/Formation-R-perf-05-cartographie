@@ -223,7 +223,7 @@ Affichage minimaliste par défaut avec fonction [`sf::plot()`](https://r-spatial
 
 ```r
 tm_shape(bio) +
-    tm_polygons("part_exp_bio")
+    tm_polygons(fill = "part_exp_bio")
 ```
 
 ![](images/2-4-cas_part_expl_bio-tm_polygons.png)
@@ -237,7 +237,7 @@ tm_shape(bio) +
 tmap_mode("view")
 tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey60",
         fill.scale = tm_scale_intervals(
             style = "pretty", # default
@@ -291,7 +291,7 @@ tm_shape(bio) +
 ```r
 tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey60",
         fill.scale = tm_scale_intervals(
             values = "brewer.bu_gn",
@@ -571,7 +571,7 @@ tmap_mode("plot")
 
 m_base <- tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey60",
         fill.scale = tm_scale_intervals(
             values = "brewer.bu_gn",
@@ -641,7 +641,7 @@ tmap_save(
 ```r
 m_facet <- tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey60",
         fill.scale = tm_scale_intervals(
             values = "brewer.bu_gn",
@@ -672,7 +672,7 @@ bio |>
     cartogram_dorling("n_exp") |>
     tm_shape() +
     tm_polygons(
-        "n_exp",
+        fill = "n_exp",
         fill.scale = tm_scale_intervals(
             values = "brewer.bu_gn",
             style = "quantile",
@@ -710,7 +710,7 @@ bio_metropole |>
     st_set_geometry("tile_map") |>
     tm_shape() +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         fill.legend = tm_legend(
             title = "Part d'expl. en AB",
             reverse = TRUE

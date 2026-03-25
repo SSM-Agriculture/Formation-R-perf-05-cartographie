@@ -29,7 +29,7 @@ tmap_mode("plot")
 # reprise v4.0
 m_exp_2 <- tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey60",
         fill.scale = tm_scale_intervals(
             style = "pretty", # default
@@ -80,7 +80,7 @@ m_nexp_bio |>
 
 m_exp_nexp_bio <- tm_shape(bio) +
     tm_polygons(
-        "part_exp_bio",
+        fill = "part_exp_bio",
         col = "grey60",
         fill.scale = tm_scale_intervals(
             values = "brewer.bu_gn",
