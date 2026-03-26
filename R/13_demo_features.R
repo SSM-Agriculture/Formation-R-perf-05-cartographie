@@ -17,7 +17,16 @@ m_base <- tm_shape(bio) +
             position = tm_pos_in("left", "bottom"),
             frame = FALSE,
             bg.alpha = 0.0
-        )
+        ),
+        fill_alpha = 0.8
+    )
+
+# Pas de fond IGN dans les fournisseurs, OpenTopoMap
+tmap_providers()
+m_base + tm_basemap("OpenStreetMap")
+m_base +
+    tm_basemap(
+        server = "https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png"
     )
 
 m <- m_base +

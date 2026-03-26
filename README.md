@@ -8,6 +8,10 @@ Support de présentation pour la formation dispensée au [SSM Agriculture](https
 
 > Pour un affichage optimisé de la présentation, il est conseillé d'utiliser un navigateur basé sur Chromium (par exemple les navigateurs Edge, Chrome, Brave...).
 
+## TODO
+
+- [ ] Ajouter des fonds de carte via `tm_basemap()` ou autre (fait en exercice / exemple)
+
 ## Correction des exercices
 
 Les corrigés des exercices sont disponibles [sur cette page](https://github.com/SSM-Agriculture/site-formations-R/wiki).
