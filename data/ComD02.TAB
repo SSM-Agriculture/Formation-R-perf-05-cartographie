@@ -1,0 +1,32 @@
+!table
+!version 300
+!charset WindowsLatin1
+
+Definition Table
+  Type NATIVE Charset "WindowsLatin1"
+  Fields 20
+    Codgeo Char (5) Index 1 ;
+    Libgeo Char (70) ;
+    ChefLieu Char (1) ;
+    Tncc Char (1) ;
+    Dct Char (4) ;
+    Dar Char (3) ;
+    Dau99 Char (3) ;
+    Dau10 Char (3) ;
+    TYPO_AU2010 Char (3) ;
+    Deu99 Char (2) ;
+    Duu99 Char (5) ;
+    Duu10 Char (5) ;
+    Z90 Char (4) ;
+    Z10 Char (4) ;
+    EPC Char (9) ;
+    BV Char (5) Index 2 ;
+    IntReg Char (2) ;
+    Reg Char (2) ;
+    Dep Char (2) ;
+    Surf Decimal (9, 2) ;
+begin_metadata
+"\IsReadOnly" = "FALSE"
+"\MapInfo" = ""
+"\MapInfo\TableID" = "b8972efe-81c2-408c-8c50-96bc57e71c1e"
+end_metadata

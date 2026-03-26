@@ -3,7 +3,6 @@
 .RData
 .Ruserdata
 
-data/
 /.quarto/
 *.html
 /.luarc.json
