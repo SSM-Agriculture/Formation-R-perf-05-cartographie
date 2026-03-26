@@ -5,10 +5,13 @@ library(tmap)
 library(cols4all)
 library(janitor)
 
+# Chargement des données ------------------------------------------------------
+
+# /!\ à adapter selon l'environnement local /!\
+# On suppose les données enregistrées dans ./data/
 com <- read_sf(here("data", "ComD02.TAB")) |>
     clean_names()
-
-pop <- read_rds(here("data", "/popD02_2013.rds")) |>
+pop <- read_rds(here("data", "popD02_2013.rds")) |>
     as_tibble(.name_repair = make_clean_names)
 
 com_pop <- com |>
@@ -20,6 +23,8 @@ com_pop <- com |>
     )
 
 com_pop
+
+# Densité de population avec habillage ----------------------------------------
 
 question_2 <-
     com_pop |>
@@ -66,6 +71,8 @@ tmap_save(
     device = ragg::agg_png
 )
 
+# Evolution de population sans habillage ----------------------------------------
+
 question_3 <-
     com_pop |>
     tm_shape() +
@@ -79,6 +86,13 @@ question_3 <-
             label.format = tm_label_format(
                 text.separator = " à "
             )
+        ),
+        fill.legend = tm_legend(
+            title = "Evolution de pop.\n2008-2013",
+            position = tm_pos_in("right", "bottom"),
+            reverse = TRUE,
+            frame = FALSE,
+            bg.alpha = 0.0
         )
     )
 question_3
@@ -89,6 +103,7 @@ tmap_save(
     device = ragg::agg_png
 )
 
+# Evolution de population avec contrôle des ruptures --------------------------
 
 question_4 <-
     com_pop |>
@@ -120,6 +135,7 @@ tmap_save(
     device = ragg::agg_png
 )
 
+# Evolution de population avec contrôle des ruptures et habillage -------------
 
 question_5 <- question_4 +
     tm_layout(
@@ -144,11 +160,12 @@ question_5 <- question_4 +
     )
 question_5
 
+# enregistrement PDF en A4 avec 0.5cm de marge
 tmap_save(
     question_5,
-    "images/6-5_population_002_2008-2013.pdf",
-    width = 20,
-    height = 28.7,
+    "images/6-5-population_002_2008-2013.pdf",
+    width = 21 - 2 * 0.5,
+    height = 29.7 - 2 * 0.5,
     units = "cm",
     dpi = 300,
     device = cairo_pdf
