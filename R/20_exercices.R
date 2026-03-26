@@ -67,7 +67,7 @@ question_2
 
 tmap_save(
     question_2,
-    "images/6-2-densite_population.png",
+    here("images", "6-2-densite_population.png"),
     device = ragg::agg_png
 )
 
@@ -99,7 +99,7 @@ question_3
 
 tmap_save(
     question_3,
-    "images/6-3-evolution_population.png",
+    here("images", "6-3-evolution_population.png"),
     device = ragg::agg_png
 )
 
@@ -131,7 +131,7 @@ question_4
 
 tmap_save(
     question_4,
-    "images/6-4-evolution_population_rupture.png",
+    here("images", "6-4-evolution_population_rupture.png"),
     device = ragg::agg_png
 )
 
@@ -163,7 +163,7 @@ question_5
 # enregistrement PDF en A4 avec 0.5cm de marge
 tmap_save(
     question_5,
-    "images/6-5-population_002_2008-2013.pdf",
+    here("images", "6-5-population_002_2008-2013.pdf"),
     width = 21 - 2 * 0.5,
     height = 29.7 - 2 * 0.5,
     units = "cm",
