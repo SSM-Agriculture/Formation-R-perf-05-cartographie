@@ -5,6 +5,11 @@ library(tmap)
 library(cols4all)
 library(janitor)
 
+#! COMPATIBILITE CERISE entre V4.0 et V4.2
+if (!exists("tm_label_format", mode = "function")) {
+    tm_label_format <- function(...) list(...)
+}
+
 # Chargement des données ------------------------------------------------------
 
 # /!\ à adapter selon l'environnement local /!\
